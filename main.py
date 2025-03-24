@@ -1,12 +1,20 @@
+from pkg.platform.types import File
 from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventContext
 from pkg.plugin.events import *  # 导入事件类
 import re
 import jmcomic, os, time, yaml
 from PIL import Image
-
+import http.client
+import json
+import time
 # 注册插件
 @register(name="ShowMeJM", description="jm下载", version="0.1", author="exneverbur")
 class MyPlugin(BasePlugin):
+
+    # napcat的域名和端口号
+    # 使用时需在napcat内配置http服务器 host和port对应好
+    http_host = "localhost"
+    http_port = 2333
 
     # 插件加载时触发
     def __init__(self, host: APIHost):
@@ -16,10 +24,10 @@ class MyPlugin(BasePlugin):
     async def initialize(self):
         pass
 
-    # 当收到群消息时触发
+    @handler(PersonNormalMessageReceived)
     @handler(GroupNormalMessageReceived)
-    async def person_normal_message_received(self, ctx: EventContext):
-        sender_id = ctx.event.sender_id
+    async def message_received(self, ctx: EventContext):
+        print("收到消息:" + ctx.event.text_message)
         receive_text = ctx.event.text_message
         cleaned_text = re.sub(r'@\S+\s*', '', receive_text).strip()
         if cleaned_text.startswith('jm'):  # 检查是否为命令
@@ -30,14 +38,21 @@ class MyPlugin(BasePlugin):
             else:
                 return ctx.add_return("reply", ["请指定jm号"])
             print("接收指令:",command, "参数：", args)
-            print("len(parts)", len(parts))
-            pdf_path = self.download_and_get_pdf(args)
+            pdf_path = ''
+            try:
+                pdf_path = self.download_and_get_pdf(args)
+            except Exception as e:
+                ctx.add_return("reply", ["下载时出现问题:" + str(e)])
+            print("文件路径:" + pdf_path)
             if pdf_path and os.path.exists(pdf_path):
                 try:
-                    await ctx.send_file(sender_id, pdf_path)
-                    ctx.add_return("reply", ["文件已发送"])
+                    if ctx.event.launcher_type == "person":
+                        self.upload_private_file(ctx.event.sender_id, pdf_path, 'jm' + args + '-' + str(time.time()) + '.pdf')
+                    else:
+                        self.upload_group_file(ctx.event.launcher_id, pdf_path, 'jm' + args + '-' + str(time.time()) + '.pdf')
+                    ctx.add_return("reply", ["你的本子即将送达~"])
                 except Exception as e:
-                    ctx.add_return("reply", ["发送文件时出错：" + str(e)])
+                    ctx.add_return("reply", ["发送文件时出错:" + str(e)])
             else:
                 ctx.add_return("reply", ["没有找到对应文件" + pdf_path])
 
@@ -50,11 +65,11 @@ class MyPlugin(BasePlugin):
         pass
 
     # 下载图片
-    def download_and_get_pdf(self, ids):
+    def download_and_get_pdf(self, arg):
         # 自定义设置：
-        config = "D:/18comic_down/code/config.yml"
+        config = "plugins/ShowMeJM/config.yml"
         loadConfig = jmcomic.JmOption.from_file(config)
-        # 如果需要下载，则取消以下注释
+        ids = [arg]
         for manhua in ids:
             jmcomic.download_album(manhua,loadConfig)
 
@@ -67,13 +82,12 @@ class MyPlugin(BasePlugin):
                 if entry.is_dir():
                     if os.path.exists(os.path.join(path + '/' + entry.name + ".pdf")):
                         print("文件：《%s》 已存在，跳过" % entry.name)
-                        continue
                     else:
                         print("开始转换：%s " % entry.name)
                         return self.all2PDF(path + "/" + entry.name, path, entry.name)
 
 
-    def all2PDF(input_folder, pdfpath, pdfname):
+    def all2PDF(self, input_folder, pdfpath, pdfname):
         start_time = time.time()
         paht = input_folder
         zimulu = []  # 子目录（里面为image）
@@ -91,7 +105,7 @@ class MyPlugin(BasePlugin):
             with os.scandir(paht + "/" + str(i)) as entries:
                 for entry in entries:
                     if entry.is_dir():
-                        print("这一级不应该有自录")
+                        print("这一级不应该有子目录")
                     if entry.is_file():
                         image.append(paht + "/" + str(i) + "/" + entry.name)
 
@@ -114,3 +128,28 @@ class MyPlugin(BasePlugin):
         run_time = end_time - start_time
         print("运行时间：%3.2f 秒" % run_time)
         return pdf_file_path
+
+    def upload_private_file(self, user_id, file, name):
+        conn = http.client.HTTPConnection(self.http_host, self.http_port)
+        payload = json.dumps({
+            "user_id": user_id,
+            "file": file,
+            "name": name
+        })
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        conn.request("POST", "/upload_private_file", payload, headers)
+
+    def upload_group_file(self, group_id, file, name):
+        conn = http.client.HTTPConnection(self.http_host, self.http_port)
+        payload = json.dumps({
+            "group_id": group_id,
+            "file": file,
+            "name": name,
+            "folder_id": "/"
+        })
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        conn.request("POST", "/upload_group_file", payload, headers)

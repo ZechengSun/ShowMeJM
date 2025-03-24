@@ -27,16 +27,35 @@
 
 下方是给用户看的内容，按需修改
 -->
-
+## 介绍
+这是可以根据JM号下载本子并发送给群友/个人的插件
+图片转pdf的代码使用了此项目的代码: [image2pdf](https://github.com/salikx/image2pdf)
 ## 安装
 
 配置完成 [LangBot](https://github.com/RockChinQ/LangBot) 主程序后使用管理员账号向机器人发送命令即可安装：
 
 ```
-!plugin get <你的插件发布仓库地址>
+!plugin get https://github.com/exneverbur/ShowMeJM
 ```
 或查看详细的[插件安装说明](https://docs.langbot.app/plugin/plugin-intro.html#%E6%8F%92%E4%BB%B6%E7%94%A8%E6%B3%95)
 
 ## 使用
 
 <!-- 插件开发者自行填写插件使用说明 -->
+首先要在消息平台配置http客户端
+
+napcat为例:
+
+1.在网络配置中新建, 选择http服务器, 填写你的host和port(注意端口号不要被其他程序占用)
+![img.png](img.png)
+2.在本项目的main.py中修改http_host和http_port两个变量即可
+![img_1.png](img_1.png)
+有关下载文件的配置(插件文件夹中的config.yml)参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
+
+## 计划功能
+
+1.群友随便发6~7位数字都触发 增加群聊惊喜感
+2.可以重复利用已下载的文件, 并删除指定天数前下载的文件以释放硬盘空间
+
+## 已知BUG
+1.下载过一次的文件再次请求会出现报错, 修复中~
