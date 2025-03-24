@@ -1,4 +1,4 @@
-# HelloPlugin
+# ShowMeJM
 
 <!--
 ## 插件开发者详阅
@@ -54,7 +54,9 @@ napcat为例:
 
 ![img_1.png](img/img_1.png)
 
-有关下载文件的配置(插件文件夹中的config.yml)参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
+3.修改有关下载文件的配置(插件文件夹中的config.yml)中的文件保存路径以及其他配置, 参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
+
+![img_3.png](img/img_3.png)
 
 ## 效果
 ![img_2.png](img/img_2.png)
