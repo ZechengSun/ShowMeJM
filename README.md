@@ -47,10 +47,17 @@
 napcat为例:
 
 1.在网络配置中新建, 选择http服务器, 填写你的host和port(注意端口号不要被其他程序占用)
-![img.png](img.png)
+
+![img.png](img/img.png)
+
 2.在本项目的main.py中修改http_host和http_port两个变量即可
-![img_1.png](img_1.png)
+
+![img_1.png](img/img_1.png)
+
 有关下载文件的配置(插件文件夹中的config.yml)参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
+
+## 效果
+![img_2.png](img/img_2.png)
 
 ## 计划功能
 
