@@ -51,13 +51,14 @@ class MyPlugin(BasePlugin):
                     else:
                         self.upload_group_file(ctx.event.launcher_id, pdf_path, 'jm' + args + '-' + str(time.time()) + '.pdf')
                     ctx.add_return("reply", ["你的本子即将送达~"])
+                    # 阻止该事件默认行为（向接口获取回复）
+                    ctx.prevent_default()
                 except Exception as e:
                     ctx.add_return("reply", ["发送文件时出错:" + str(e)])
             else:
                 ctx.add_return("reply", ["没有找到对应文件" + pdf_path])
 
-        # 阻止该事件默认行为（向接口获取回复）
-        ctx.prevent_default()
+
 
 
     # 插件卸载时触发
@@ -70,8 +71,10 @@ class MyPlugin(BasePlugin):
         config = "plugins/ShowMeJM/config.yml"
         loadConfig = jmcomic.JmOption.from_file(config)
         ids = [arg]
+        downloadedFileName = ''
         for manhua in ids:
-            jmcomic.download_album(manhua,loadConfig)
+            album, dler = jmcomic.download_album(manhua,loadConfig)
+            downloadedFileName = album.name
 
         with open(config, "r", encoding="utf8") as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
@@ -81,11 +84,12 @@ class MyPlugin(BasePlugin):
             for entry in entries:
                 if entry.is_dir():
                     if os.path.exists(os.path.join(path + '/' + entry.name + ".pdf")):
+                        if downloadedFileName == entry.name:
+                            return os.path.join(path + '/' + entry.name + ".pdf")
                         print("文件：《%s》 已存在，跳过" % entry.name)
                     else:
                         print("开始转换：%s " % entry.name)
                         return self.all2PDF(path + "/" + entry.name, path, entry.name)
-
 
     def all2PDF(self, input_folder, pdfpath, pdfname):
         start_time = time.time()
