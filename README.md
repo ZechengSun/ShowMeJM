@@ -29,7 +29,8 @@
 -->
 ## 介绍
 这是可以根据JM号下载本子并发送给群友/个人的插件
-图片转pdf的代码使用了此项目的代码: [image2pdf](https://github.com/salikx/image2pdf)
+图片转pdf的部分参考了此项目的代码: [image2pdf](https://github.com/salikx/image2pdf)
+支持分批次处理图片, 分批打包
 ## 安装
 
 配置完成 [LangBot](https://github.com/RockChinQ/LangBot) 主程序后使用管理员账号向机器人发送命令即可安装：
@@ -44,6 +45,8 @@
 <!-- 插件开发者自行填写插件使用说明 -->
 首先要在消息平台配置http客户端
 
+(当前只支持napcat, 其他消息平台可以自行参考平台官方文档修改发送请求部分的代码)
+
 napcat为例:
 
 1.在网络配置中新建, 选择http服务器, 填写你的host和port(注意端口号不要被其他程序占用)
@@ -54,17 +57,34 @@ napcat为例:
 
 ![img_1.png](img/img_1.png)
 
+3.在本项目的main.py中按需调整打包参数
+
+![img_6.png](img/img_6.png)
+
 3.修改有关下载文件的配置(插件文件夹中的config.yml)中的文件保存路径以及其他配置, 参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
 
 ![img_3.png](img/img_3.png)
 
 ## 效果
-![img_2.png](img/img_2.png)
+单文件打包
 
+![img_4.png](img/img_4.png)
+
+分批打包
+
+![img_5.png](img/img_5.png)
+
+自动匹配逆天文案
+
+![img_7.png](img/img_7.png)
 ## 计划功能
 
-1.群友随便发6~7位数字都触发 增加群聊惊喜感
+1.增加搜索
 
 2.可以重复利用已下载的文件, 并删除指定天数前下载的文件以释放硬盘空间
 
+3.增加其他消息平台的适配
+
 ## 已知BUG
+
+暂未发现, 欢迎提issue
