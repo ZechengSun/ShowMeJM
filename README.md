@@ -53,42 +53,52 @@ napcat为例:
 
 1.在网络配置中新建, 选择http服务器, 填写你的host和port(注意端口号不要被其他程序占用)
 
-![img.png](img/img.png)
+![img.png](img/1.png)
 
 2.在本项目的main.py中修改http_host和http_port两个变量即可
 
-![img_1.png](img/img_1.png)
+![img_1.png](img/8.png)
 
 3.在本项目的main.py中按需调整打包参数
 
-![img_6.png](img/img_6.png)
+![img_6.png](img/3.png)
 
-3.修改有关下载文件的配置(插件文件夹中的config.yml)中的文件保存路径以及其他配置, 参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
+4.修改有关下载文件的配置(插件文件夹中的config.yml)中的文件保存路径以及其他配置, 参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
 
-![img_3.png](img/img_3.png)
+![img_3.png](img/2.png)
+
+## 指令
+
+| 指令                       |      含义       |      示例       |
+|:-------------------------|:-------------:|:-------------:|
+| jm                       |    获取指令帮助     |      jm       |
+| jm [jm号]                 | 获取并上传指定jm号的漫画 |   jm 350234   |
+| 查jm [关键词/标签] [页码(默认第一页)] |      搜索       | 查jm 鸣潮,+无修正 2 |
 
 ## 效果
 单文件打包
 
-![img_4.png](img/img_4.png)
+![单文件上传.png](img/6.png)
 
 分批打包
 
-![img_5.png](img/img_5.png)
+![img_3.png](img/4.png)
 
 自动匹配逆天文案
 
-![img_7.png](img/img_7.png)
+![img_2.png](img/5.png)
+
+搜索
+
+![img_1.png](img/7.png)
 ## 计划功能
 
-1.增加搜索
+1.可以重复利用已下载的文件, 并删除指定天数前下载的文件以释放硬盘空间
 
-2.可以重复利用已下载的文件, 并删除指定天数前下载的文件以释放硬盘空间
-
-3.增加其他消息平台的适配
+2.增加其他消息平台的适配
 
 ## 已知BUG
 
 暂未发现, 欢迎提issue
 
-![img.png](img.png)
+![img.png](img/img.png)

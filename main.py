@@ -40,21 +40,40 @@ class MyPlugin(BasePlugin):
     @handler(PersonNormalMessageReceived)
     @handler(GroupNormalMessageReceived)
     async def message_received(self, ctx: EventContext):
-        print("收到消息:" + ctx.event.text_message)
         receive_text = ctx.event.text_message
+        print('receive text:', receive_text)
         cleaned_text = re.sub(r'@\S+\s*', '', receive_text).strip()
-        print(f"原始消息: {receive_text}")
-        print(f"清理后的消息: {cleaned_text}")
         if cleaned_text.startswith('jm'):  # 检查是否为命令
-            parts = cleaned_text.split(' ', 1)  # 分割命令和参数
-            command = parts[0]
-            if len(parts) > 1:
-                args = parts[1]
-            else:
-                return ctx.add_return("reply", ["请指定jm号"])
-            print("接收指令:", command, "参数：", args)
-            await ctx.reply(f"即将开始下载{args}, 请稍后...")
-            await self.before_download(ctx, args)
+            args = self.parseCommand(ctx, cleaned_text)
+            if len(args) == 0:
+                await ctx.reply("1.搜索功能: \n格式: 查jm [关键词/标签] [页码(默认第一页)]\n例: 查jm 鸣潮,+无修正 2\n\n2.下载功能:\n格式:jm [jm号]\n例: jm 350234")
+                if self.prevent_default:
+                    # 阻止该事件默认行为（向接口获取回复）
+                    ctx.prevent_default()
+                return
+            await ctx.reply(f"即将开始下载{args[0]}, 请稍后...")
+            await self.before_download(ctx, args[0])
+        elif cleaned_text.startswith('查jm'):
+            args = self.parseCommand(ctx, cleaned_text)
+            print(args)
+            if len(args) == 0:
+                await ctx.reply("请指定搜索条件, 格式: 查jm [关键词/标签] [页码(默认第一页)]\n例: 查jm 鸣潮,+无修正 2")
+                if self.prevent_default:
+                    # 阻止该事件默认行为（向接口获取回复）
+                    ctx.prevent_default()
+                return
+            page = int(args[1]) if len(args) > 1 else 1
+            results = await self.doSearch(ctx, args[0], page)
+            search_result = f"当前为第{page}页\n\n"
+            i = 1
+            for itemArr in results:
+                search_result += f"{i}. [{itemArr[0]}]: {itemArr[1]}\n"
+                i += 1
+            search_result += "\n对我说jm jm号进行下载吧~"
+            await ctx.reply(search_result)
+            if self.prevent_default:
+                # 阻止该事件默认行为（向接口获取回复）
+                ctx.prevent_default()
         # 匹配消息中包含的 6~7 位数字
         elif self.auto_find_jm:
             numbers = re.findall(r'\d+', cleaned_text)
@@ -66,6 +85,15 @@ class MyPlugin(BasePlugin):
     # 插件卸载时触发
     def __del__(self):
         pass
+
+    def parseCommand(self, ctx: EventContext, message: str):
+        parts = message.split(' ', 1)  # 分割命令和参数
+        command = parts[0]
+        args = []
+        if len(parts) > 1:
+            args = parts[1:]
+        print("接收指令:", command, "参数：", args)
+        return args
 
     async def before_download(self, ctx: EventContext, manga_id):
         try:
@@ -110,7 +138,8 @@ class MyPlugin(BasePlugin):
         with os.scandir(path) as entries:
             for entry in entries:
                 if entry.is_dir() and downloaded_file_name == entry.name:
-                    pattern = f"{path}/{entry.name}*.pdf"
+                    real_name = glob.escape(entry.name)
+                    pattern = f"{path}/{real_name}*.pdf"
                     matches = glob.glob(pattern)
                     if len(matches) > 0:
                         print(f"文件：《{entry.name}》 已存在无需转换pdf，直接返回")
@@ -148,7 +177,7 @@ class MyPlugin(BasePlugin):
             print(f"开始处理第{i}个pdf")
             i += 1
             # 分批处理图像 减少内存占用
-            temp_pdf = "temp.pdf"
+            temp_pdf = f"temp{pdfname}.pdf"
             for j in range(0, len(image_paths), self.batch_size):
                 batch = image_paths[j:j + self.batch_size]
                 with Image.open(batch[0]) as first_img:
@@ -192,6 +221,7 @@ class MyPlugin(BasePlugin):
                     ctx.add_return("reply", [f"发送文件 {file_name} 时出错: {str(e)}"])
                     print(f"发送文件 {file_name} 时出错: {str(e)}")
 
+    # 发送私聊文件
     async def upload_private_file(self, user_id, file, name):
         url = f"http://{self.http_host}:{self.http_port}/upload_private_file"
         payload = {
@@ -207,6 +237,7 @@ class MyPlugin(BasePlugin):
                 if response.status != 200:
                     raise Exception(f"上传失败，状态码: {response.status}, 错误信息: {response.message}")
 
+    # 发送群文件
     async def upload_group_file(self, group_id, file, name):
         url = f"http://{self.http_host}:{self.http_port}/upload_group_file"
         payload = {
@@ -223,3 +254,14 @@ class MyPlugin(BasePlugin):
                 if response.status != 200:
                     raise Exception(f"上传失败，状态码: {response.status}, 错误信息: {response.message}")
 
+    # 执行JM的搜索
+    async def doSearch(self, ctx: EventContext, search_query: str, page):
+        config = jmcomic.create_option_by_file("plugins/ShowMeJM/config.yml")
+        client = config.new_jm_client()
+        tags = search_query.replace(',', ' ').replace('，', ' ')
+        page: JmSearchPage = client.search_site(search_query=tags, page=page)
+        # page默认的迭代方式是page.iter_id_title()，每次迭代返回 albun_id, title
+        result = []
+        for album_id, title in page:
+            result.append([album_id, title])
+        return result
