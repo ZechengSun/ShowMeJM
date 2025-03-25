@@ -11,7 +11,7 @@ import aiohttp
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.2", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="1.3", author="exneverbur")
 class MyPlugin(BasePlugin):
     # napcat的域名和端口号
     # 使用时需在napcat内配置http服务器 host和port对应好
@@ -20,7 +20,7 @@ class MyPlugin(BasePlugin):
     # 打包成pdf时每批处理的图片数量 每批越小内存占用越小
     batch_size = 100
     # 每个pdf中最多有多少个图片 超过此数量时将会创建新的pdf文件 设置为0则不限制, 所有图片都在一个pdf文件中
-    pdf_max_pages = 100
+    pdf_max_pages = 200
     # 上传到群文件的哪个目录?默认"/"是传到根目录 如果指定目录要提前在群文件里建好文件夹
     group_folder = "/"
     # 是否开启自动匹配消息中的jm号功能(消息中的所有数字加起来是6~7位数字就触发下载本子) 此功能可能会下载很多不需要的本子占据硬盘, 请谨慎开启
@@ -53,7 +53,7 @@ class MyPlugin(BasePlugin):
             await ctx.reply(f"即将开始下载{args[0]}, 请稍后...")
             await self.before_download(ctx, args[0])
         elif cleaned_text.startswith('查jm'):
-            args = self.parseCommand(ctx, cleaned_text)
+            args = self.parse_command(ctx, cleaned_text)
             if len(args) == 0:
                 await ctx.reply("请指定搜索条件, 格式: 查jm [关键词/标签] [页码(默认第一页)]\n例: 查jm 鸣潮,+无修正 2")
                 if self.prevent_default:
@@ -61,7 +61,7 @@ class MyPlugin(BasePlugin):
                     ctx.prevent_default()
                 return
             page = int(args[1]) if len(args) > 1 else 1
-            results = await self.doSearch(ctx, args[0], page)
+            results = await self.do_search(ctx, args[0], page)
             search_result = f"当前为第{page}页\n\n"
             i = 1
             for itemArr in results:
@@ -84,8 +84,8 @@ class MyPlugin(BasePlugin):
     def __del__(self):
         pass
 
-    def parseCommand(self, ctx: EventContext, message: str):
-        parts = message.split(' ', 1)  # 分割命令和参数
+    def parse_command(self, ctx: EventContext, message: str):
+        parts = message.split(' ')  # 分割命令和参数
         command = parts[0]
         args = []
         if len(parts) > 1:
