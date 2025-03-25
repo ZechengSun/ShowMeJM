@@ -11,15 +11,15 @@ import aiohttp
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.0", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="1.1", author="exneverbur")
 class MyPlugin(BasePlugin):
     # napcat的域名和端口号
     # 使用时需在napcat内配置http服务器 host和port对应好
     http_host = "localhost"
     http_port = 2333
-    # 打包成pdf时每批处理的图片数量 每批越小占用越小
-    batch_size = 10
-    # 每个pdf中最多有多少个图片 设置为0则不限制
+    # 打包成pdf时每批处理的图片数量 每批越小内存占用越小
+    batch_size = 50
+    # 每个pdf中最多有多少个图片 超过此数量时将会创建新的pdf文件 设置为0则不限制, 所有图片都在一个pdf文件中
     pdf_max_pages = 100
     # 上传到群文件的哪个目录?默认"/"是传到根目录 如果指定目录要提前在群文件里建好文件夹
     group_folder = "/"
@@ -147,15 +147,26 @@ class MyPlugin(BasePlugin):
         for page in range(0, len(image_paths), pdf_page_size):
             print(f"开始处理第{i}个pdf")
             i += 1
-            chunk = image_paths[page:page + pdf_page_size]
+            # 分批处理图像 减少内存占用
+            temp_pdf = "plugins/ShowMeJM/temp.pdf"
+            for j in range(0, len(image_paths), self.batch_size):
+                batch = image_paths[j:j + self.batch_size]
+                with Image.open(batch[0]) as first_img:
+                    if j == 0:
+                        first_img.save(
+                            temp_pdf,
+                            save_all=True,
+                            append_images=[Image.open(img) for img in batch[1:]]
+                        )
+                    else:
+                        first_img.save(
+                            temp_pdf,
+                            save_all=True,
+                            append_images=[Image.open(img) for img in batch[1:]],
+                            append=True
+                        )
             output_pdf = os.path.join(pdfpath, f"{pdfname}-{page // pdf_page_size}.pdf")
-            # 分批次写入
-            with Image.open(chunk[0]) as first_img:
-                first_img.save(
-                    output_pdf,
-                    save_all=True,
-                    append_images=[Image.open(img) for img in chunk[1:]]
-                )
+            os.rename(temp_pdf, output_pdf)
             pdf_files.append(output_pdf)
 
         end_time = time.time()
