@@ -43,7 +43,7 @@ class MyPlugin(BasePlugin):
         receive_text = ctx.event.text_message
         cleaned_text = re.sub(r'@\S+\s*', '', receive_text).strip()
         if cleaned_text.startswith('jm'):  # 检查是否为命令
-            args = self.parseCommand(ctx, cleaned_text)
+            args = self.parse_command(ctx, cleaned_text)
             if len(args) == 0:
                 await ctx.reply("1.搜索功能: \n格式: 查jm [关键词/标签] [页码(默认第一页)]\n例: 查jm 鸣潮,+无修正 2\n\n2.下载功能:\n格式:jm [jm号]\n例: jm 350234")
                 if self.prevent_default:
