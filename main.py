@@ -11,14 +11,14 @@ import aiohttp
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.1", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="1.2", author="exneverbur")
 class MyPlugin(BasePlugin):
     # napcat的域名和端口号
     # 使用时需在napcat内配置http服务器 host和port对应好
     http_host = "localhost"
     http_port = 2333
     # 打包成pdf时每批处理的图片数量 每批越小内存占用越小
-    batch_size = 50
+    batch_size = 100
     # 每个pdf中最多有多少个图片 超过此数量时将会创建新的pdf文件 设置为0则不限制, 所有图片都在一个pdf文件中
     pdf_max_pages = 100
     # 上传到群文件的哪个目录?默认"/"是传到根目录 如果指定目录要提前在群文件里建好文件夹
@@ -41,7 +41,6 @@ class MyPlugin(BasePlugin):
     @handler(GroupNormalMessageReceived)
     async def message_received(self, ctx: EventContext):
         receive_text = ctx.event.text_message
-        print('receive text:', receive_text)
         cleaned_text = re.sub(r'@\S+\s*', '', receive_text).strip()
         if cleaned_text.startswith('jm'):  # 检查是否为命令
             args = self.parseCommand(ctx, cleaned_text)
@@ -55,7 +54,6 @@ class MyPlugin(BasePlugin):
             await self.before_download(ctx, args[0])
         elif cleaned_text.startswith('查jm'):
             args = self.parseCommand(ctx, cleaned_text)
-            print(args)
             if len(args) == 0:
                 await ctx.reply("请指定搜索条件, 格式: 查jm [关键词/标签] [页码(默认第一页)]\n例: 查jm 鸣潮,+无修正 2")
                 if self.prevent_default:
@@ -106,7 +104,6 @@ class MyPlugin(BasePlugin):
             single_file_flag = len(pdf_files) == 1
             if len(pdf_files) > 0:
                 await ctx.reply("你寻找的本子已经打包发在路上啦, 即将送达~")
-                print(pdf_files)
                 if ctx.event.launcher_type == "person":
                     await self.send_files_in_order(ctx, pdf_files, manga_id, single_file_flag, is_group=False)
                 else:
@@ -130,7 +127,6 @@ class MyPlugin(BasePlugin):
         for manhua in ids:
             album, dler = jmcomic.download_album(manhua, load_config)
             downloaded_file_name = album.name
-
         with open(config, "r", encoding="utf8") as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
             path = data["dir_rule"]["base_dir"]
@@ -175,11 +171,11 @@ class MyPlugin(BasePlugin):
         pdf_page_size = self.pdf_max_pages if self.pdf_max_pages > 0 else len(image_paths)
         for page in range(0, len(image_paths), pdf_page_size):
             print(f"开始处理第{i}个pdf")
-            i += 1
+            trunk = image_paths[page: page + pdf_page_size]
             # 分批处理图像 减少内存占用
             temp_pdf = f"temp{pdfname}.pdf"
-            for j in range(0, len(image_paths), self.batch_size):
-                batch = image_paths[j:j + self.batch_size]
+            for j in range(0, len(trunk), self.batch_size):
+                batch = trunk[j:j + self.batch_size]
                 with Image.open(batch[0]) as first_img:
                     if j == 0:
                         first_img.save(
@@ -194,9 +190,10 @@ class MyPlugin(BasePlugin):
                             append_images=[Image.open(img) for img in batch[1:]],
                             append=True
                         )
-            output_pdf = os.path.join(pdfpath, f"{pdfname}-{page // pdf_page_size}.pdf")
+            output_pdf = os.path.join(pdfpath, f"{pdfname}-{i}.pdf")
             os.rename(temp_pdf, output_pdf)
             pdf_files.append(output_pdf)
+            i += 1
 
         end_time = time.time()
         run_time = end_time - start_time
@@ -255,7 +252,7 @@ class MyPlugin(BasePlugin):
                     raise Exception(f"上传失败，状态码: {response.status}, 错误信息: {response.message}")
 
     # 执行JM的搜索
-    async def doSearch(self, ctx: EventContext, search_query: str, page):
+    async def do_search(self, ctx: EventContext, search_query: str, page):
         config = jmcomic.create_option_by_file("plugins/ShowMeJM/config.yml")
         client = config.new_jm_client()
         tags = search_query.replace(',', ' ').replace('，', ' ')
