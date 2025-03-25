@@ -1,32 +1,5 @@
 # ShowMeJM
 
-<!--
-## 插件开发者详阅
-
-### 开始
-
-此仓库是 LangBot 插件模板，您可以直接在 GitHub 仓库中点击右上角的 "Use this template" 以创建你的插件。  
-接下来按照以下步骤修改模板代码：
-
-#### 修改模板代码
-
-- 修改此文档顶部插件名称信息
-- 将此文档下方的`<插件发布仓库地址>`改为你的插件在 GitHub· 上的地址
-- 补充下方的`使用`章节内容
-- 修改`main.py`中的`@register`中的插件 名称、描述、版本、作者 等信息
-- 修改`main.py`中的`MyPlugin`类名为你的插件类名
-- 将插件所需依赖库写到`requirements.txt`中
-- 根据[插件开发教程](https://docs.langbot.app/plugin/dev/tutor.html)编写插件代码
-- 删除 README.md 中的注释内容
-
-
-#### 发布插件
-
-推荐将插件上传到 GitHub 代码仓库，以便用户通过下方方式安装。   
-欢迎[提issue](https://github.com/RockChinQ/LangBot/issues/new?assignees=&labels=%E7%8B%AC%E7%AB%8B%E6%8F%92%E4%BB%B6&projects=&template=submit-plugin.yml&title=%5BPlugin%5D%3A+%E8%AF%B7%E6%B1%82%E7%99%BB%E8%AE%B0%E6%96%B0%E6%8F%92%E4%BB%B6)，将您的插件提交到[插件列表](https://github.com/stars/RockChinQ/lists/qchatgpt-%E6%8F%92%E4%BB%B6)
-
-下方是给用户看的内容，按需修改
--->
 ## 介绍
 这是可以帮你下载漫画并发送给QQ的插件, 本插件仅包含图片打包和上传功能, 请不要使用此插件向其他人传播不和谐的内容
 
@@ -51,7 +24,7 @@
 
 napcat为例:
 
-1.在网络配置中新建, 选择http服务器, 填写你的host和port(注意端口号不要被其他程序占用)
+1.在网络配置中新建, 选择http服务器, 填写你的host和port(注意端口号不要被其他程序占用) 如果langbot和napcat在同一网络环境下host直接填写127.0.0.1或localhost, 配置完可以在浏览器访问一下, 比如127.0.0.1:2333, 如果返回信息里有'NapCat4 Is Running'字样说明运行正常。只要你在napcat配置的url+端口号在langbot所在的网络环境下能正常访问到就ok
 
 ![img.png](img/1.png)
 
@@ -63,7 +36,7 @@ napcat为例:
 
 ![img_6.png](img/3.png)
 
-4.修改有关下载文件的配置(插件文件夹中的config.yml)中的文件保存路径以及其他配置, 参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
+4.修改有关下载文件的配置(插件文件夹中的config.yml)中的文件保存路径以及其他配置, 图中框选出来的值要改成你自己本地的存储路径, 下载的图片和解析后的pdf都会存在这里 其他配置不要修改, 一定要修改请参考[此文档](https://github.com/hect0x7/JMComic-Crawler-Python/blob/master/assets/docs/sources/option_file_syntax.md)
 
 ![img_3.png](img/2.png)
 
