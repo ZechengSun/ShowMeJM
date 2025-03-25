@@ -148,7 +148,7 @@ class MyPlugin(BasePlugin):
             print(f"开始处理第{i}个pdf")
             i += 1
             # 分批处理图像 减少内存占用
-            temp_pdf = "plugins/ShowMeJM/temp.pdf"
+            temp_pdf = "temp.pdf"
             for j in range(0, len(image_paths), self.batch_size):
                 batch = image_paths[j:j + self.batch_size]
                 with Image.open(batch[0]) as first_img:
