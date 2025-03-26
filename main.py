@@ -1,17 +1,16 @@
-from pkg.platform.types import File
+
 from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventContext
 from pkg.plugin.events import *  # 导入事件类
 import re
-import jmcomic, os, time, yaml
+import jmcomic, os, yaml
 from PIL import Image
-import json
 import time
 import glob
 import aiohttp
-
+import shutil
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.3", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="1.4", author="exneverbur")
 class MyPlugin(BasePlugin):
     # napcat的域名和端口号
     # 使用时需在napcat内配置http服务器 host和port对应好
@@ -52,6 +51,9 @@ class MyPlugin(BasePlugin):
                 return
             await ctx.reply(f"即将开始下载{args[0]}, 请稍后...")
             await self.before_download(ctx, args[0])
+            if self.prevent_default:
+                # 阻止该事件默认行为（向接口获取回复）
+                ctx.prevent_default()
         elif cleaned_text.startswith('查jm'):
             args = self.parse_command(ctx, cleaned_text)
             if len(args) == 0:
@@ -108,9 +110,6 @@ class MyPlugin(BasePlugin):
                     await self.send_files_in_order(ctx, pdf_files, manga_id, single_file_flag, is_group=False)
                 else:
                     await self.send_files_in_order(ctx, pdf_files, manga_id, single_file_flag, is_group=True)
-                if self.prevent_default:
-                    # 阻止该事件默认行为（向接口获取回复）
-                    ctx.prevent_default()
             else:
                 print("没有找到下载的pdf文件")
                 ctx.add_return("reply", ["没有找到下载的pdf文件"])
@@ -142,7 +141,11 @@ class MyPlugin(BasePlugin):
                         return matches
                     else:
                         print("开始转换：%s " % entry.name)
-                        return self.all2PDF(path + "/" + entry.name, path, entry.name)
+                        try:
+                            return self.all2PDF(path + "/" + entry.name, path, entry.name)
+                        except Exception as e:
+                            print(f"转换pdf时发生错误: {str(e)}")
+                            raise e
 
     def all2PDF(self, input_folder, pdfpath, pdfname):
         start_time = time.time()
@@ -173,7 +176,9 @@ class MyPlugin(BasePlugin):
             print(f"开始处理第{i}个pdf")
             trunk = image_paths[page: page + pdf_page_size]
             # 分批处理图像 减少内存占用
-            temp_pdf = f"temp{pdfname}.pdf"
+            temp_pdf = f"plugins/ShowMeJM/manga/temp{pdfname}.pdf"
+            if os.path.exists(temp_pdf):
+                os.remove(temp_pdf)
             for j in range(0, len(trunk), self.batch_size):
                 batch = trunk[j:j + self.batch_size]
                 with Image.open(batch[0]) as first_img:
@@ -191,7 +196,17 @@ class MyPlugin(BasePlugin):
                             append=True
                         )
             output_pdf = os.path.join(pdfpath, f"{pdfname}-{i}.pdf")
-            os.rename(temp_pdf, output_pdf)
+            try:
+                shutil.move(temp_pdf, output_pdf)
+            except FileNotFoundError:
+                print("源文件不存在")
+                raise Exception("源文件不存在")
+            except PermissionError:
+                print("权限不足，无法移动文件")
+                raise Exception("权限不足，无法移动文件")
+            except Exception as e:
+                print(f"发生错误: {e}")
+                raise Exception(f"发生错误: {e}")
             pdf_files.append(output_pdf)
             i += 1
 
@@ -232,7 +247,11 @@ class MyPlugin(BasePlugin):
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
-                    raise Exception(f"上传失败，状态码: {response.status}, 错误信息: {response.message}")
+                    raise Exception(f"上传失败，状态码: {response.status}, 错误信息: {response.text}")
+                res = await response.json()
+                print("napcat返回消息->" + str(res))
+                if res["status"] != "ok":
+                    raise Exception(f"上传失败，状态码: {res['status']}, 描述: {res['message']}\n完整消息: {str(res)}")
 
     # 发送群文件
     async def upload_group_file(self, group_id, file, name):
@@ -249,7 +268,12 @@ class MyPlugin(BasePlugin):
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
-                    raise Exception(f"上传失败，状态码: {response.status}, 错误信息: {response.message}")
+                    raise Exception(f"上传失败，状态码: {response.status}, 错误信息: {response.text}")
+                res = await response.json()
+                print("napcat返回消息->" + str(res))
+                if res["status"] != "ok":
+                    raise Exception(f"上传失败，状态码: {res['status']}, 描述: {res['message']}\n完整消息: {str(res)}")
+
 
     # 执行JM的搜索
     async def do_search(self, ctx: EventContext, search_query: str, page):
