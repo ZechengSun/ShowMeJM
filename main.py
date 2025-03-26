@@ -185,7 +185,7 @@ class MyPlugin(BasePlugin):
             print(f"开始处理第{i}个pdf")
             trunk = image_paths[page: page + pdf_page_size]
             # 分批处理图像 减少内存占用
-            temp_pdf = f"plugins/ShowMeJM/manga/temp{pdfname}.pdf"
+            temp_pdf = f"plugins/ShowMeJM/temp{pdfname}.pdf"
             if os.path.exists(temp_pdf):
                 os.remove(temp_pdf)
             for j in range(0, len(trunk), self.batch_size):
