@@ -10,7 +10,7 @@ import aiohttp
 import shutil
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.4", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="1.5", author="exneverbur")
 class MyPlugin(BasePlugin):
     # 消息平台的域名,端口号和token
     # 使用时需在napcat内配置http服务器 host和port对应好
