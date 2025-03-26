@@ -20,7 +20,7 @@
 <!-- 插件开发者自行填写插件使用说明 -->
 首先要在消息平台配置http客户端
 
-(当前只支持napcat, 其他消息平台可以自行参考平台官方文档修改发送请求部分的代码)
+(当前在napcat, llonebot测试过功能正常, 其他消息平台可以自行参考平台官方文档修改发送请求部分的代码)
 
 napcat为例:
 
@@ -30,7 +30,9 @@ napcat为例:
 
 2.在本项目的main.py中修改http_host和http_port两个变量即可
 
-![img_1.png](img/8.png)
+若你在消息平台配置了token, 则也需要将同样的token添加在此处的token属性中
+
+![img.png](img/img8.png)
 
 3.在本项目的main.py中按需调整打包参数
 

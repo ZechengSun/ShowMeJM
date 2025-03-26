@@ -12,10 +12,12 @@ import shutil
 # 注册插件
 @register(name="ShowMeJM", description="jm下载", version="1.4", author="exneverbur")
 class MyPlugin(BasePlugin):
-    # napcat的域名和端口号
+    # 消息平台的域名,端口号和token
     # 使用时需在napcat内配置http服务器 host和port对应好
     http_host = "localhost"
     http_port = 2333
+    # 若消息平台未配置token则留空 否则填写配置的token
+    token = ""
     # 打包成pdf时每批处理的图片数量 每批越小内存占用越小
     batch_size = 100
     # 每个pdf中最多有多少个图片 超过此数量时将会创建新的pdf文件 设置为0则不限制, 所有图片都在一个pdf文件中
@@ -81,9 +83,6 @@ class MyPlugin(BasePlugin):
             if 6 <= len(concatenated_numbers) <= 7:
                 await ctx.reply(f"你提到了{concatenated_numbers}...对吧?")
                 await self.before_download(ctx, concatenated_numbers)
-                if self.prevent_default:
-                    # 阻止该事件默认行为（向接口获取回复）
-                    ctx.prevent_default()
 
     # 插件卸载时触发
     def __del__(self):
@@ -244,9 +243,15 @@ class MyPlugin(BasePlugin):
             "file": file,
             "name": name
         }
-        headers = {
-            'Content-Type': 'application/json'
-        }
+        if self.token == "":
+            headers = {
+                'Content-Type': 'application/json'
+            }
+        else:
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}'
+            }
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
@@ -265,9 +270,15 @@ class MyPlugin(BasePlugin):
             "name": name,
             "folder_id": self.group_folder
         }
-        headers = {
-            'Content-Type': 'application/json'
-        }
+        if self.token == "":
+            headers = {
+                'Content-Type': 'application/json'
+            }
+        else:
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}'
+            }
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 if response.status != 200:
