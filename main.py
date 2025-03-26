@@ -10,7 +10,7 @@ import aiohttp
 import shutil
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.5", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="1.6", author="exneverbur")
 class MyPlugin(BasePlugin):
     # 消息平台的域名,端口号和token
     # 使用时需在napcat内配置http服务器 host和port对应好
@@ -162,9 +162,16 @@ class MyPlugin(BasePlugin):
         # 对数字进行排序
         zimulu.sort()
 
+        # 自然顺序排序
+        def natural_sort_key(entry):
+            name = entry.name
+            match = re.match(r"(\d+)", name)
+            return int(match.group(1)) if match else name
+
         for i in zimulu:
             with os.scandir(path + "/" + str(i)) as entries:
-                for entry in entries:
+                sorted_entries = sorted(entries, key=natural_sort_key)
+                for entry in sorted_entries:
                     if entry.is_dir():
                         print("这一级不应该有子目录")
                     if entry.is_file():
