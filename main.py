@@ -12,6 +12,8 @@ from plugins.ShowMeJM.utils.jm_options import JmOptions
 @register(name="ShowMeJM", description="jm下载", version="1.8", author="exneverbur")
 class MyPlugin(BasePlugin):
     init_options = {
+        # 你使用的消息平台, 只能为'napcat', 'llonebot', 'lagrange'
+        "platform": 'napcat',
         # 消息平台的域名,端口号和token
         # 使用时需在napcat内配置http服务器 host和port对应好
         'http_host': 'localhost',

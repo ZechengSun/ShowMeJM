@@ -1,8 +1,9 @@
 class JmOptions:
-    __slots__ = ["http_host", "http_port", "token", "batch_size", "pdf_max_pages", "group_folder", "auto_find_jm", "prevent_default", "option"]
+    __slots__ = ["platform", "http_host", "http_port", "token", "batch_size", "pdf_max_pages", "group_folder", "auto_find_jm", "prevent_default", "option"]
 
     def __init__(
             self,
+            platform: str = 'napcat',
             http_host: str = 'localhost',
             http_port: int = 2333,
             token: str = '',
@@ -13,6 +14,7 @@ class JmOptions:
             prevent_default: bool = True,
             option: str = 'plugins/ShowMeJM/config.yml'
     ):
+        self.platform = platform
         self.http_host = http_host
         self.http_port = http_port
         self.token = token
@@ -26,6 +28,7 @@ class JmOptions:
     @classmethod
     def from_dict(cls, config: dict):
         return cls(
+            platform=config.get('platform', 'napcat'),
             http_host=config.get('http_host', 'localhost'),
             http_port=config.get('http_port', 2333),
             token=config.get('token', ''),

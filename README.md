@@ -18,9 +18,16 @@
 ## 使用
 
 <!-- 插件开发者自行填写插件使用说明 -->
-首先要在消息平台配置http客户端
 
-(当前在napcat, llonebot测试过功能正常, 其他消息平台可以自行参考平台官方文档修改发送请求部分的代码)
+消息平台功能支持情况
+
+| 消息平台     | 下载漫画 | 查询漫画 | 发送私聊文件 | 发送群聊文件 |
+|:---------|:----:|:----:|:------:|:------:|
+| napcat   |  √   |  √   |   √    |   √    |
+| llonebot |   √   |    √  |   √    |   √     |
+|    lagrange      |    √   |   √    |   ×    |     √    |
+
+首先要在消息平台配置http客户端
 
 napcat为例:
 
@@ -28,11 +35,11 @@ napcat为例:
 
 ![img.png](img/1.png)
 
-2.在本项目的main.py中修改http_host和http_port两个变量即可
+2.在本项目的main.py中修改platform、http_host和http_port三个变量即可
 
 若你在消息平台配置了token, 则也需要将同样的token添加在此处的token属性中
 
-![img.png](img/img_1.png)
+![img.png](img/img_3.png)
 
 3.在本项目的main.py中按需调整打包参数
 
@@ -76,7 +83,36 @@ napcat为例:
 ## 已知BUG
 
 1. 指定群文件目录配置不能生效, 暂时先统一设置成根目录
+2. lagrange平台上传私聊文件接口当前不可用 会报错, 待他们修复
 
 欢迎提issue, 提交前请先更新插件版本, 以及查看以往的issue里是否有类似已解决问题。
 
 ![img.png](img/img.png)
+
+## 其他
+附上一个lagrange配置示例
+
+```yml
+# appsettings.json
+"Implementations": [
+        {
+            "Type": "ReverseWebSocket",
+            "Host": "127.0.0.1",
+            "Port": 2280,
+            "Suffix": "/ws",
+            "ReconnectInterval": 5000,
+            "HeartBeatInterval": 5000,
+            "AccessToken": ""
+        },
+        {
+            "Type": "Http",
+            "Host": "127.0.0.1",
+            "Port": 2333,
+            "AccessToken": ""
+        }
+    ]
+```
+
+还有一个llonebot配置示例
+
+![img_1.png](img/img_1.png)
