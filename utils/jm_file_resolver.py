@@ -10,7 +10,7 @@ import yaml
 
 import jmcomic
 from PIL import Image
-
+from pkg.platform.types import MessageChain
 from pkg.plugin.context import EventContext
 from plugins.ShowMeJM.utils.jm_options import JmOptions
 from plugins.ShowMeJM.utils.jm_send_http_request import *
@@ -22,20 +22,20 @@ async def before_download(ctx: EventContext, options: JmOptions, manga_id):
         try:
             pdf_files = download_and_get_pdf(options, manga_id)
         except Exception as e:
-            await ctx.reply("下载时出现问题:" + str(e))
+            await ctx.reply(MessageChain(["下载时出现问题:" + str(e)]))
         print(f"成功保存了{len(pdf_files)}个pdf")
         single_file_flag = len(pdf_files) == 1
         if len(pdf_files) > 0:
-            await ctx.reply("你寻找的本子已经打包发在路上啦, 即将送达~")
+            await ctx.reply(MessageChain(["你寻找的本子已经打包发在路上啦, 即将送达~"]))
             if ctx.event.launcher_type == "person":
                 await send_files_in_order(options, ctx, pdf_files, manga_id, single_file_flag, is_group=False)
             else:
                 await send_files_in_order(options, ctx, pdf_files, manga_id, single_file_flag, is_group=True)
         else:
             print("没有找到下载的pdf文件")
-            await ctx.reply("没有找到下载的pdf文件")
+            await ctx.reply(MessageChain(["没有找到下载的pdf文件"]))
     except Exception as e:
-        await ctx.reply("代码运行时出现问题:" + str(e))
+        await ctx.reply(MessageChain(["代码运行时出现问题:" + str(e)]))
 
 
 # 下载图片
@@ -162,7 +162,7 @@ async def send_files_in_order(options: JmOptions, ctx: EventContext, pdf_files, 
                     await upload_private_file(options, ctx.event.sender_id, pdf_path, file_name)
                 print(f"文件 {file_name} 已成功发送")
             except Exception as e:
-                await ctx.reply(f"发送文件 {file_name} 时出错: {str(e)}")
+                await ctx.reply(MessageChain([f"发送文件 {file_name} 时出错: {str(e)}"]))
                 print(f"发送文件 {file_name} 时出错: {str(e)}")
 
 # 获取群文件目录是否存在 并返回目录id

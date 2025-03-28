@@ -1,3 +1,4 @@
+from pkg.platform.types import MessageChain
 from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventContext
 from pkg.plugin.events import *
 import jmcomic
@@ -9,7 +10,7 @@ from plugins.ShowMeJM.utils.jm_options import JmOptions
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.8", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="1.9", author="exneverbur")
 class MyPlugin(BasePlugin):
     init_options = {
         # 你使用的消息平台, 只能为'napcat', 'llonebot', 'lagrange'
@@ -88,7 +89,7 @@ class MyPlugin(BasePlugin):
     async def do_search(self, ctx: EventContext, cleaned_text: str):
         args = self.parse_command(ctx, cleaned_text)
         if len(args) == 0:
-            await ctx.reply("请指定搜索条件, 格式: 查jm [关键词/标签] [页码(默认第一页)]\n例: 查jm 鸣潮,+无修正 2")
+            await ctx.reply(MessageChain(["请指定搜索条件, 格式: 查jm [关键词/标签] [页码(默认第一页)]\n例: 查jm 鸣潮,+无修正 2"]))
             return
         page = int(args[1]) if len(args) > 1 else 1
         config = jmcomic.create_option_by_file(self.options.option)
@@ -107,11 +108,11 @@ class MyPlugin(BasePlugin):
             search_result += f"{i}. [{itemArr[0]}]: {itemArr[1]}\n"
             i += 1
         search_result += "\n对我说jm jm号进行下载吧~"
-        await ctx.reply(search_result)
+        await ctx.reply(MessageChain([search_result]))
 
     # 更新域名
     async def do_update_domain(self, ctx: EventContext):
-        await ctx.reply("检查中, 请稍后...")
+        await ctx.reply(MessageChain(["检查中, 请稍后..."]))
         # 自动将可用域名加进配置文件中
         domains = domain_checker.get_usable_domain(self.options.option)
         usable_domains = []
@@ -120,43 +121,29 @@ class MyPlugin(BasePlugin):
             check_result += f"{domain}: {status}\n"
             if status == 'ok':
                 usable_domains.append(domain)
-        await ctx.reply(check_result)
+        await ctx.reply(MessageChain([check_result]))
         try:
             domain_checker.update_option_domain(self.options.option, usable_domains)
         except Exception as e:
-            await ctx.reply("修改配置文件时发生问题: " + str(e))
+            await ctx.reply(MessageChain(["修改配置文件时发生问题: " + str(e)]))
             return
-        await ctx.reply(
-            "已将可用域名添加到配置文件中~\n PS:如遇网络原因下载失败, 对我说:'jm清空域名'指令可以将配置文件中的域名清除, 此时我将自动寻找可用域名哦")
+        await ctx.reply(MessageChain(["已将可用域名添加到配置文件中~\n PS:如遇网络原因下载失败, 对我说:'jm清空域名'指令可以将配置文件中的域名清除, 此时我将自动寻找可用域名哦"]))
 
     # 清空域名
     async def do_clear_domain(self, ctx: EventContext):
         domain_checker.clear_domain(self.options.option)
-        await ctx.reply(
-            "已将默认下载域名全部清空, 我将会自行寻找可用域名\n PS:对我说:'jm更新域名'指令可以查看当前可用域名并添加进配置文件中哦")
+        await ctx.reply(MessageChain(["已将默认下载域名全部清空, 我将会自行寻找可用域名\n PS:对我说:'jm更新域名'指令可以查看当前可用域名并添加进配置文件中哦"]))
 
     # 下载漫画
     async def do_download(self, ctx: EventContext, cleaned_text: str):
         args = self.parse_command(ctx, cleaned_text)
         if len(args) == 0:
-            await ctx.reply(
-                "你是不是在找: \n"
-                "1.搜索功能: \n"
-                "格式: 查jm [关键词/标签] [页码(默认第一页)]\n"
-                "例: 查jm 鸣潮,+无修正 2\n\n"
-                "2.下载功能:\n"
-                "格式:jm [jm号]\n"
-                "例: jm 350234\n\n"
-                "3.寻找可用下载域名:\n"
-                "格式:jm更新域名\n\n"
-                "4.清除默认域名:\n"
-                "格式:jm清空域名"
-            )
+            await ctx.reply(MessageChain(["你是不是在找: \n""1.搜索功能: \n""格式: 查jm [关键词/标签] [页码(默认第一页)]\n""例: 查jm 鸣潮,+无修正 2\n\n""2.下载功能:\n""格式:jm [jm号]\n""例: jm 350234\n\n""3.寻找可用下载域名:\n""格式:jm更新域名\n\n""4.清除默认域名:\n""格式:jm清空域名"]))
             if self.options.prevent_default:
                 # 阻止该事件默认行为（向接口获取回复）
                 ctx.prevent_default()
             return
-        await ctx.reply(f"即将开始下载{args[0]}, 请稍后...")
+        await ctx.reply(MessageChain([f"即将开始下载{args[0]}, 请稍后..."]))
         await jm_file_resolver.before_download(ctx, self.options, args[0])
 
     # 匹配逆天文案
@@ -164,5 +151,5 @@ class MyPlugin(BasePlugin):
         numbers = re.findall(r'\d+', cleaned_text)
         concatenated_numbers = ''.join(numbers)
         if 6 <= len(concatenated_numbers) <= 7:
-            await ctx.reply(f"你提到了{concatenated_numbers}...对吧?")
+            await ctx.reply(MessageChain([f"你提到了{concatenated_numbers}...对吧?"]))
             await jm_file_resolver.before_download(ctx, self.options, concatenated_numbers)
