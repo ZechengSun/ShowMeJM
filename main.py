@@ -10,7 +10,7 @@ from plugins.ShowMeJM.utils.jm_options import JmOptions
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="1.9", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="2.0", author="exneverbur")
 class MyPlugin(BasePlugin):
     init_options = {
         # 你使用的消息平台, 只能为'napcat', 'llonebot', 'lagrange'
@@ -21,8 +21,8 @@ class MyPlugin(BasePlugin):
         'http_port': 2333,
         # 若消息平台未配置token则留空 否则填写配置的token
         'token': '',
-        # 打包成pdf时每批处理的图片数量 每批越小内存占用越小, 但速度也会越慢
-        'batch_size': 100,
+        # 打包成pdf时每批处理的图片数量 每批越小内存占用越小 (仅供参考, 建议按实际调整: 设置为50时峰值占用约1.5G内存, 设置为20时最高占用1G左右)
+        'batch_size': 20,
         # 每个pdf中最多有多少个图片 超过此数量时将会创建新的pdf文件 设置为0则不限制, 所有图片都在一个pdf文件中
         'pdf_max_pages': 200,
         # 上传到群文件的哪个目录?默认"/"是传到根目录 如果指定的目录不存在会自动创建文件夹

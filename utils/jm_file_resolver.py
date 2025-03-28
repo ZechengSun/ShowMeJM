@@ -1,6 +1,7 @@
 """
 对文件的下载与打包
 """
+import gc
 import glob
 import os
 import re
@@ -72,77 +73,63 @@ def download_and_get_pdf(options: JmOptions, arg):
 
 def all2PDF(options, input_folder, pdfpath, pdfname):
     start_time = time.time()
-    path = input_folder
-    zimulu = []  # 子目录（里面为image）
-    image_paths = []  # 子目录图集
-
-    with os.scandir(path) as entries:
-        for entry in entries:
+    image_paths = []
+    # 遍历主目录（自然排序）
+    with os.scandir(input_folder) as entries:
+        for entry in sorted(entries, key=lambda e: int(e.name) if e.is_dir() and e.name.isdigit() else float('inf')):
             if entry.is_dir():
-                zimulu.append(int(entry.name))
-    # 对数字进行排序
-    zimulu.sort()
-
-    # 自然顺序排序
-    def natural_sort_key(entry):
-        name = entry.name
-        match = re.match(r"(\d+)", name)
-        return int(match.group(1)) if match else name
-
-    for i in zimulu:
-        with os.scandir(path + "/" + str(i)) as entries:
-            sorted_entries = sorted(entries, key=natural_sort_key)
-            for entry in sorted_entries:
-                if entry.is_dir():
-                    print("这一级不应该有子目录")
-                if entry.is_file():
-                    image_paths.append(path + "/" + str(i) + "/" + entry.name)
-
+                # 处理子目录内容（自然排序）
+                subdir = os.path.join(input_folder, entry.name)
+                with os.scandir(subdir) as sub_entries:
+                    for sub_entry in sorted(sub_entries, key=lambda e: int(re.search(r'\d+', e.name).group()) if re.search(r'\d+', e.name) else float('inf')):
+                        if sub_entry.is_file():
+                            image_paths.append(os.path.join(subdir, sub_entry.name))
     pdf_files = []
-    # 分页处理
-    i = 1
-    pdf_page_size = options.pdf_max_pages if options.pdf_max_pages > 0 else len(image_paths)
-    for page in range(0, len(image_paths), pdf_page_size):
-        print(f"开始处理第{i}个pdf")
-        trunk = image_paths[page: page + pdf_page_size]
-        # 分批处理图像 减少内存占用
-        temp_pdf = f"plugins/ShowMeJM/temp{pdfname}.pdf"
-        if os.path.exists(temp_pdf):
-            os.remove(temp_pdf)
-        for j in range(0, len(trunk), options.batch_size):
-            batch = trunk[j:j + options.batch_size]
-            with Image.open(batch[0]) as first_img:
-                if j == 0:
-                    first_img.save(
-                        temp_pdf,
-                        save_all=True,
-                        append_images=[Image.open(img) for img in batch[1:]]
-                    )
-                else:
-                    first_img.save(
-                        temp_pdf,
-                        save_all=True,
-                        append_images=[Image.open(img) for img in batch[1:]],
-                        append=True
-                    )
-        output_pdf = os.path.join(pdfpath, f"{pdfname}-{i}.pdf")
-        try:
-            shutil.move(temp_pdf, output_pdf)
-        except FileNotFoundError:
-            print("源文件不存在")
-            raise Exception("源文件不存在")
-        except PermissionError:
-            print("权限不足，无法移动文件")
-            raise Exception("权限不足，无法移动文件")
-        except Exception as e:
-            print(f"发生错误: {e}")
-            raise Exception(f"发生错误: {e}")
-        pdf_files.append(output_pdf)
-        i += 1
+    total_pages = len(image_paths)
+    pdf_page_size = options.pdf_max_pages if options.pdf_max_pages > 0 else total_pages
 
+    # 分段处理逻辑优化
+    for chunk_idx, page_start in enumerate(range(0, total_pages, pdf_page_size), 1):
+        chunk = image_paths[page_start:page_start + pdf_page_size]
+        temp_pdf = f"plugins/ShowMeJM/temp{pdfname}-{chunk_idx}.pdf"
+        final_pdf = os.path.join(pdfpath, f"{pdfname}-{chunk_idx}.pdf")
+        try:
+            batch_size = options.batch_size
+            # 预加载第一部分
+            images = []
+            for img_path in chunk[:batch_size]:
+                with Image.open(img_path) as img:
+                    images.append(img.copy())
+            if images:
+                try:
+                    images[0].save(temp_pdf, format='PDF', save_all=True, append_images=images[1:])
+                finally:
+                    for img in images:
+                        if hasattr(img, "fp") and img.fp is not None:
+                            img.close()
+            # 添加后续图片
+            for i in range(batch_size, len(chunk), batch_size):
+                batch = chunk[i:i + batch_size]
+                batch_images = [Image.open(img) for img in batch]
+                try:
+                    images[0].save(temp_pdf, format='PDF', save_all=True, append_images=batch_images, append=True)
+                finally:
+                    for img in batch_images:
+                        if hasattr(img, "fp") and img.fp is not None:
+                            img.close()
+            shutil.move(temp_pdf, final_pdf)
+            pdf_files.append(final_pdf)
+            print(f"成功生成第{chunk_idx}个PDF: {final_pdf}")
+
+        except (IOError, OSError) as e:
+            print(f"图像处理异常: {str(e)}")
+            raise Exception(f"PDF生成失败: {e}")
+        finally:
+            if os.path.exists(temp_pdf):
+                os.remove(temp_pdf)
+            gc.collect()
     end_time = time.time()
-    run_time = end_time - start_time
-    print("运行时间：%3.2f 秒" % run_time)
+    print(f"总运行时间：{end_time - start_time:.2f}秒")
     return pdf_files
 
 
