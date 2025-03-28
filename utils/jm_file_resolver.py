@@ -13,7 +13,7 @@ from PIL import Image
 
 from pkg.plugin.context import EventContext
 from plugins.ShowMeJM.utils.jm_options import JmOptions
-from plugins.ShowMeJM.utils.jm_send_http_request import upload_group_file, upload_private_file
+from plugins.ShowMeJM.utils.jm_send_http_request import *
 
 
 async def before_download(ctx: EventContext, options: JmOptions, manga_id):
@@ -156,10 +156,29 @@ async def send_files_in_order(options: JmOptions, ctx: EventContext, pdf_files, 
             file_name = f"{manga_id}{suffix}.pdf"
             try:
                 if is_group:
-                    await upload_group_file(options, ctx.event.launcher_id, pdf_path, file_name)
+                    folder_id = await get_group_folder_id(options, ctx, ctx.event.launcher_id, options.group_folder)
+                    await upload_group_file(options, ctx.event.launcher_id, folder_id, pdf_path, file_name)
                 else:
                     await upload_private_file(options, ctx.event.sender_id, pdf_path, file_name)
                 print(f"文件 {file_name} 已成功发送")
             except Exception as e:
                 await ctx.reply(f"发送文件 {file_name} 时出错: {str(e)}")
                 print(f"发送文件 {file_name} 时出错: {str(e)}")
+
+# 获取群文件目录是否存在 并返回目录id
+async def get_group_folder_id(options: JmOptions, ctx: EventContext, group_id, folder_name):
+    if folder_name == '/':
+        return '/'
+    data = await get_group_root_files(options, group_id)
+    for folder in data.get('folders', []):
+        if folder.get('folder_name') == folder_name:
+            return folder.get('folder_id')
+    # 未找到该文件夹时创建文件夹
+    folder_id = await create_group_file_folder(options, group_id, folder_name)
+    if folder_id is None:
+        data = await get_group_root_files(options, group_id)
+        for folder in data.get('folders', []):
+            if folder.get('folder_name') == folder_name:
+                return folder.get('folder_id')
+        return "/"
+    return folder_id
