@@ -10,7 +10,7 @@ from plugins.ShowMeJM.utils.jm_options import JmOptions
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="2.0", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="2.1", author="exneverbur")
 class MyPlugin(BasePlugin):
     init_options = {
         # 你使用的消息平台, 只能为'napcat', 'llonebot', 'lagrange'
@@ -62,7 +62,10 @@ class MyPlugin(BasePlugin):
             await self.do_search(ctx, cleaned_text)
         # 匹配消息中包含的 6~7 位数字
         elif self.options.auto_find_jm:
-            await self.do_auto_find_jm(ctx, cleaned_text)
+            prevent_default = False
+            matched = await self.do_auto_find_jm(ctx, cleaned_text)
+            if matched and self.options.prevent_default:
+                prevent_default = True
         else:
             # 未匹配上任何指令 说明此次消息与本插件无关
             prevent_default = False
@@ -153,3 +156,5 @@ class MyPlugin(BasePlugin):
         if 6 <= len(concatenated_numbers) <= 7:
             await ctx.reply(MessageChain([f"你提到了{concatenated_numbers}...对吧?"]))
             await jm_file_resolver.before_download(ctx, self.options, concatenated_numbers)
+            return True
+        return False
