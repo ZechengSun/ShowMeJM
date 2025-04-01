@@ -6,6 +6,15 @@
 图片转pdf的部分参考了此项目的代码: [image2pdf](https://github.com/salikx/image2pdf)
 
 支持分批次处理图片, 分批打包, 支持可配置每批数量, 内存占用↓↓
+
+## 鸣谢
+
+感谢[JMComic-Crawler-Python](https://github.com/hect0x7/JMComic-Crawler-Python)项目提供的JM相关API
+
+感谢[image2pdf](https://github.com/salikx/image2pdf)提供了图片转pdf的代码参考
+
+感谢[drdon1234](https://github.com/drdon1234)贡献的获取随机漫画功能
+
 ## 安装
 
 配置完成 [LangBot](https://github.com/RockChinQ/LangBot) 主程序后使用管理员账号向机器人发送命令即可安装：
@@ -58,8 +67,9 @@ napcat为例:
 | jm                       |                获取指令帮助                 |      jm      |
 | jm [jm号]                 |             获取并上传指定jm号的漫画             |  jm 350234   |
 | 查jm [关键词/标签] [页码(默认第一页)] |                  搜索                   | 查jm 鸣潮,+长离 2 |
-| jm更新域名                |    查询当前可用域名并加进配置文件中(该方式限制ip地区但效率高)    |              |
-| jm清空域名                      | 将配置文件中的域名初始化, 下载时会自动寻找域名(该方式不限ip兼容性好) |              |
+| 随机jm [关键词/标签]            |               随机获取一个漫画                |     随机jm     |
+| jm更新域名                   |    查询当前可用域名并加进配置文件中(该方式限制ip地区但效率高)    |              |
+| jm清空域名                   | 将配置文件中的域名初始化, 下载时会自动寻找域名(该方式不限ip兼容性好) |              |
 
 
 ## 效果
@@ -86,8 +96,7 @@ napcat为例:
 
 ## 已知BUG
 
-1. 指定群文件目录配置不能生效, 暂时先统一设置成根目录
-2. lagrange平台上传私聊文件接口当前不可用 会报错, 待他们修复
+1. lagrange平台上传私聊文件接口当前不可用 会报错, 待他们修复
 
 欢迎提issue, 提交前请先更新插件版本, 以及查看以往的issue里是否有类似已解决问题。
 
@@ -120,3 +129,9 @@ napcat为例:
 还有一个llonebot配置示例
 
 ![img_1.png](img/img_1.png)
+
+## 更新日志
+
+v2.2
+- 新增 随机漫画功能
+- 新增 下载配置支持相对路径

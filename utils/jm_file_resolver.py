@@ -50,7 +50,7 @@ def download_and_get_pdf(options: JmOptions, arg):
     downloaded_file_name = album.album_id
     with open(options.option, "r", encoding="utf8") as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        path = data["dir_rule"]["base_dir"]
+        path = os.path.abspath(data["dir_rule"]["base_dir"])
 
     with os.scandir(path) as entries:
         for entry in entries:
@@ -64,7 +64,7 @@ def download_and_get_pdf(options: JmOptions, arg):
                 else:
                     print("开始转换：%s " % entry.name)
                     try:
-                        return all2PDF(options, path + "/" + entry.name, path, entry.name)
+                        return all2PDF(options, os.path.join(path, entry.name), path, entry.name)
                     except Exception as e:
                         print(f"转换pdf时发生错误: {str(e)}")
                         raise e
@@ -92,7 +92,7 @@ def all2PDF(options, input_folder, pdfpath, pdfname):
     for chunk_idx, page_start in enumerate(range(0, total_pages, pdf_page_size), 1):
         chunk = image_paths[page_start:page_start + pdf_page_size]
         temp_pdf = f"plugins/ShowMeJM/temp{pdfname}-{chunk_idx}.pdf"
-        final_pdf = os.path.join(pdfpath, f"{pdfname}-{chunk_idx}.pdf")
+        final_pdf = os.path.abspath(os.path.join(pdfpath, f"{pdfname}-{chunk_idx}.pdf"))
         try:
             batch_size = options.batch_size
             # 预加载第一部分
