@@ -3,15 +3,13 @@
 ## 介绍
 这是可以帮你下载漫画并发送给QQ的插件, 本插件仅包含图片打包和上传功能, 请不要使用此插件向其他人传播不和谐的内容
 
-图片转pdf的部分参考了此项目的代码: [image2pdf](https://github.com/salikx/image2pdf)
-
 支持分批次处理图片, 分批打包, 支持可配置每批数量, 内存占用↓↓
 
 ## 鸣谢
 
 感谢[JMComic-Crawler-Python](https://github.com/hect0x7/JMComic-Crawler-Python)项目提供的JM相关API
 
-感谢[image2pdf](https://github.com/salikx/image2pdf)提供了图片转pdf的代码参考
+参考了[image2pdf](https://github.com/salikx/image2pdf)部分图片转pdf的代码
 
 感谢[drdon1234](https://github.com/drdon1234)贡献的获取随机漫画功能
 
