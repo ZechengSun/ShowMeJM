@@ -34,6 +34,17 @@
 | llonebot |   √   |    √  |   √    |   √     |
 |    lagrange      |    √   |   √    |   ×    |     √    |
 
+### 安装依赖JMComic-Crawler-Python
+
+- 通过pip官方源安装（推荐，并且更新也是这个命令, 若下载时连接不上请尝试更新此依赖的版本）
+```
+pip install jmcomic -i https://pypi.org/project -U
+```
+- 通过源代码安装
+```
+pip install git+https://github.com/hect0x7/JMComic-Crawler-Python
+```
+### 配置
 首先要在消息平台配置http客户端
 
 napcat为例:
@@ -56,7 +67,7 @@ napcat为例:
 
 ![img_3.png](img/2.png)
 
-5.给bot管理员权限才能进行群文件的上传
+5.你的群可能需要给bot管理员权限才能进行群文件的上传
 
 ## 指令
 
@@ -130,6 +141,8 @@ napcat为例:
 
 ## 更新日志
 
+v2.3
+- 更新 JMComic-Crawler-Python版本(新版本更新了jm的下载域名)
 v2.2
 - 新增 随机漫画功能
 - 新增 下载配置支持相对路径

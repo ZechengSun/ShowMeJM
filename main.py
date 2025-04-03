@@ -12,7 +12,7 @@ from plugins.ShowMeJM.utils.jm_random_search import JmRandomSearch
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="2.2", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="2.3", author="exneverbur")
 class MyPlugin(BasePlugin):
     init_options = {
         # 你使用的消息平台, 只能为'napcat', 'llonebot', 'lagrange'
