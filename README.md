@@ -34,16 +34,7 @@
 | llonebot |   √   |    √  |   √    |   √     |
 |    lagrange      |    √   |   √    |   ×    |     √    |
 
-### 安装依赖JMComic-Crawler-Python
 
-- 通过pip官方源安装（推荐，并且更新也是这个命令, 若下载时连接不上请尝试更新此依赖的版本）
-```
-pip install jmcomic -i https://pypi.org/project -U
-```
-- 通过源代码安装
-```
-pip install git+https://github.com/hect0x7/JMComic-Crawler-Python
-```
 ### 配置
 首先要在消息平台配置http客户端
 
@@ -112,6 +103,13 @@ napcat为例:
 ![img.png](img/img.png)
 
 ## 其他
+
+若api出现连接不上jm无法下载, 可能是域名没有更新导致的, 请尝试在cmd中使用下面的命令更新依赖版本
+
+```
+pip install jmcomic -i https://pypi.org/project -U
+```
+
 附上一个lagrange配置示例
 
 ```yml
