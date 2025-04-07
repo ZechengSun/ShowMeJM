@@ -90,11 +90,9 @@ napcat为例:
 ![img_1.png](img/7.png)
 ## 计划功能
 
-1.增加群白名单功能, 防止意外触发漫画上传导致炸群
+1.下载指定章节
 
-2.下载指定章节
-
-3.主动每日推荐
+2.主动每日推荐
 
 欢迎提issue, 有空闲时间时会考虑实现
 
@@ -155,9 +153,14 @@ py -<你的版本> -m pip install jmcomic –i https://pypi.org/project –U
 ![img_1.png](img/img_1.png)
 
 ## 更新日志
+v2.4
+- 修改 随机jm改为除impl外其余均使用用户配置的下载配置
+- 优化 随机jm现在也会显示漫画名了
+- 新增 白名单功能, 在main.py配置你的qq号(person_whitelist)或群号(group_whitelist), 可以控制只在哪些群里启用本插件的功能
 
 v2.3
 - 更新 JMComic-Crawler-Python版本(新版本更新了jm的下载域名)
+
 v2.2
 - 新增 随机漫画功能
 - 新增 下载配置支持相对路径
