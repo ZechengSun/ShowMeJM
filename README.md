@@ -92,6 +92,10 @@ napcat为例:
 
 1.增加群白名单功能, 防止意外触发漫画上传导致炸群
 
+2.下载指定章节
+
+3.主动每日推荐
+
 欢迎提issue, 有空闲时间时会考虑实现
 
 ## 已知BUG
@@ -108,6 +112,19 @@ napcat为例:
 
 ```
 pip install jmcomic -i https://pypi.org/project -U
+```
+
+若还是报错 可能是装在其他python上了, 使用下面的指令指定安装到你当前的python版本上
+1.查看当前使用的python版本
+```
+# 查看当前python版本
+python --version
+# 我的电脑返回 Python 3.10.10
+```
+2.指定安装到此版本的python上
+```
+py -<你的版本> -m pip install jmcomic –i https://pypi.org/project –U
+# 比如我当前装的是3.10.10 则使用py -3.10 -m pip install jmcomic –i https://pypi.org/project –U
 ```
 
 附上一个lagrange配置示例
