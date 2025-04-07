@@ -37,7 +37,10 @@ class MyPlugin(BasePlugin):
         # 配置文件所在位置
         'option': 'plugins/ShowMeJM/config.yml',
         # 是否在启动时获取本子总页数(此功能在插件加载时会访问JM搜索页数, 将会提高随机本子指令的搜索速度)
-        'open_random_search': True
+        'open_random_search': True,
+        # 白名单 配置个人白名单和群白名单 若为空或不配置则不启用白名单功能
+        # 'person_whitelist': [123456, 654321],
+        # 'group_whitelist': [12345678],
     }
 
     # 插件加载时触发
@@ -59,27 +62,27 @@ class MyPlugin(BasePlugin):
     async def message_received(self, ctx: EventContext):
         receive_text = ctx.event.text_message
         cleaned_text = re.sub(r'@\S+\s*', '', receive_text).strip()
-        prevent_default = self.options.prevent_default
+        prevent_default = [self.options.prevent_default]
         if cleaned_text.startswith('jm更新域名'):
-            await self.do_update_domain(ctx)
+            await self.execute_if_allowed(ctx, prevent_default, lambda: self.do_update_domain(ctx))
         elif cleaned_text.startswith('jm清空域名'):
-            await self.do_clear_domain(ctx)
+            await self.execute_if_allowed(ctx, prevent_default, lambda: self.do_clear_domain(ctx))
         elif cleaned_text.startswith('随机jm'):
-            await self.do_random_download(ctx, cleaned_text)
+            await self.execute_if_allowed(ctx, prevent_default, lambda: self.do_random_download(ctx, cleaned_text))
         elif cleaned_text.startswith('jm'):
-            await self.do_download(ctx, cleaned_text)
+            await self.execute_if_allowed(ctx, prevent_default, lambda: self.do_download(ctx, cleaned_text))
         elif cleaned_text.startswith('查jm'):
-            await self.do_search(ctx, cleaned_text)
+            await self.execute_if_allowed(ctx, prevent_default, lambda: self.do_search(ctx, cleaned_text))
         # 匹配消息中包含的 6~7 位数字
         elif self.options.auto_find_jm:
-            prevent_default = False
-            matched = await self.do_auto_find_jm(ctx, cleaned_text)
+            prevent_default[0] = False
+            matched = await self.execute_if_allowed(ctx, prevent_default, lambda: self.do_auto_find_jm(ctx, cleaned_text))
             if matched and self.options.prevent_default:
-                prevent_default = True
+                prevent_default[0] = True
         else:
             # 未匹配上任何指令 说明此次消息与本插件无关
-            prevent_default = False
-        if prevent_default:
+            prevent_default[0] = False
+        if prevent_default[0]:
             # 阻止该事件默认行为（向接口获取回复）
             ctx.prevent_default()
 
@@ -199,6 +202,33 @@ class MyPlugin(BasePlugin):
             await jm_file_resolver.before_download(ctx, self.options, concatenated_numbers)
             return True
         return False
+
+    # 校验白名单权限
+    async def execute_if_allowed(self, ctx: EventContext, prevent_default, action):
+        if ctx.event.launcher_type == "person":
+            is_group = False
+            target = ctx.event.sender_id
+        else:
+            is_group = True
+            target = ctx.event.launcher_id
+
+        if self.verify_whitelist(is_group, target):
+            return await action()
+        prevent_default[0] = False
+        return None
+
+    def verify_whitelist(self, is_group: bool, target):
+        if is_group:
+            whitelist = self.options.group_whitelist
+        else:
+            whitelist = self.options.person_whitelist
+        if whitelist is None or len(whitelist) == 0:
+            return True
+        res = target in whitelist
+        if not res:
+            print(f'该群或好友"{target}"不在白名单中, 停止访问')
+        return res
+
 
 
 def parse_command(ctx: EventContext, message: str):
