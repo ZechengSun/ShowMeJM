@@ -148,7 +148,8 @@ class MyPlugin(BasePlugin):
                 raise ValueError("未找到任何漫画")
             random_index = random.randint(0, len(album_list) - 1)
             selected_album_id = album_list[random_index][0]
-            await ctx.reply(MessageChain([f"找到的随机本子 ID 是：{selected_album_id}，即将开始下载，请稍候..."]))
+            selected_album_title = album_list[random_index][1]
+            await ctx.reply(MessageChain([f"你今天的幸运本子是：[{selected_album_id}]{selected_album_title}，即将开始下载，请稍候..."]))
             await jm_file_resolver.before_download(ctx, self.options, selected_album_id)
         except Exception as e:
             await ctx.reply(MessageChain([f"随机本子下载失败：{e}"]))
@@ -158,7 +159,7 @@ class MyPlugin(BasePlugin):
         args = parse_command(ctx, cleaned_text)
         if len(args) == 0:
             await ctx.reply(MessageChain([
-                "你是不是在找: \n""1.搜索功能: \n""格式: 查jm [关键词/标签] [页码(默认第一页)]\n""例: 查jm 鸣潮,+无修正 2\n\n""2.下载指定id的本子:\n""格式:jm [jm号]\n""例: jm 350234\n\n""4.下载随机本子:\n""格式:随机jm\n\n""3.寻找可用下载域名:\n""格式:jm更新域名\n\n""4.清除默认域名:\n""格式:jm清空域名"]))
+                "你是不是在找: \n""1.搜索功能: \n""格式: 查jm [关键词/标签] [页码(默认第一页)]\n""例: 查jm 鸣潮,+无修正 2\n\n""2.下载指定id的本子:\n""格式:jm [jm号]\n""例: jm 350234\n\n""3.下载随机本子:\n""格式:随机jm\n\n""4.寻找可用下载域名:\n""格式:jm更新域名\n\n""5.清除默认域名:\n""格式:jm清空域名"]))
             if self.options.prevent_default:
                 # 阻止该事件默认行为（向接口获取回复）
                 ctx.prevent_default()
