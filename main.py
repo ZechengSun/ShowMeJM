@@ -44,8 +44,10 @@ class MyPlugin(BasePlugin):
     def __init__(self, host: APIHost):
         super().__init__(host)
         self.options = JmOptions.from_dict(self.init_options)
-        self.client = jmcomic.create_option_by_file(self.options.option).new_jm_client()
-        self.random_searcher = JmRandomSearch(self.client)
+        file_option = jmcomic.create_option_by_file(self.options.option)
+        self.client = file_option.new_jm_client()
+        self.api_client = file_option.new_jm_client(impl='api')
+        self.random_searcher = JmRandomSearch(self.api_client)
 
     # 异步初始化插件时触发
     async def initialize(self):
@@ -136,9 +138,8 @@ class MyPlugin(BasePlugin):
                 MessageChain([f"未搜索到任何关键词为 {tags} 随机本子，建议更换为其他语言的相同关键词重新搜索..."]))
             return
         random_page = random.randint(1, max_page)
-        client = JmOption.default().new_jm_client()
         try:
-            result = client.search_site(search_query=tags, page=random_page)
+            result = self.api_client.search_site(search_query=tags, page=random_page)
             album_list = list(result.iter_id_title())
             if not album_list:
                 raise ValueError("未找到任何漫画")
@@ -176,7 +177,7 @@ class MyPlugin(BasePlugin):
         page = int(args[1]) if len(args) > 1 else 1
         search_query = args[0]
         tags = re.sub(r'[，,]+', ' ', search_query)
-        search_page: JmSearchPage = self.client.search_site(search_query=tags, page=page)
+        search_page: JmSearchPage = self.api_client.search_site(search_query=tags, page=page)
         # search_page默认的迭代方式是page.iter_id_title()，每次迭代返回 albun_id, title
         results = []
         for album_id, title in search_page:
