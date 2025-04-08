@@ -113,6 +113,7 @@ pip install jmcomic -i https://pypi.org/project -U
 ```
 
 若还是报错 可能是装在其他python上了, 使用下面的指令指定安装到你当前的python版本上
+
 1.查看当前使用的python版本
 ```
 # 查看当前python版本
@@ -124,6 +125,7 @@ python --version
 py -<你的版本> -m pip install jmcomic –i https://pypi.org/project –U
 # 比如我当前装的是3.10.10 则使用py -3.10 -m pip install jmcomic –i https://pypi.org/project –U
 ```
+若你使用的是langbot懒人包, 懒人包内包含了一个python, 你在外部更新依赖是无效的, 请参考issue里的解决办法。
 
 附上一个lagrange配置示例
 
