@@ -16,6 +16,7 @@ from pkg.plugin.context import EventContext
 from plugins.ShowMeJM.utils.jm_options import JmOptions
 from plugins.ShowMeJM.utils.jm_send_http_request import *
 
+from PyPDF2 import PdfReader, PdfWriter
 
 async def before_download(ctx: EventContext, options: JmOptions, manga_id):
     try:
@@ -27,7 +28,7 @@ async def before_download(ctx: EventContext, options: JmOptions, manga_id):
         print(f"成功保存了{len(pdf_files)}个pdf")
         single_file_flag = len(pdf_files) == 1
         if len(pdf_files) > 0:
-            await ctx.reply(MessageChain(["你寻找的本子已经打包发在路上啦, 即将送达~"]))
+            await ctx.reply(MessageChain(["本子已经打包发在路上"]))
             if ctx.event.launcher_type == "person":
                 await send_files_in_order(options, ctx, pdf_files, manga_id, single_file_flag, is_group=False)
             else:
@@ -70,7 +71,24 @@ def download_and_get_pdf(options: JmOptions, arg):
                         raise e
     return []
 
+def encrypt_pdf(input_pdf, output_pdf, password):
+    """
+    使用 PyPDF2 为 PDF 添加密码保护
+    """
+    reader = PdfReader(input_pdf)
+    writer = PdfWriter()
 
+    # 将所有页面添加到新的 PDF 中
+    for page in reader.pages:
+        writer.add_page(page)
+
+    # 设置密码
+    writer.encrypt(password)
+
+    # 写入加密后的 PDF
+    with open(output_pdf, "wb") as f:
+        writer.write(f)
+        
 def all2PDF(options, input_folder, pdfpath, pdfname):
     start_time = time.time()
     image_paths = []
@@ -117,9 +135,11 @@ def all2PDF(options, input_folder, pdfpath, pdfname):
                     for img in batch_images:
                         if hasattr(img, "fp") and img.fp is not None:
                             img.close()
-            shutil.move(temp_pdf, final_pdf)
+
+            # 加密 PDF 文件
+            encrypt_pdf(temp_pdf, final_pdf, password="jmcomic")
             pdf_files.append(final_pdf)
-            print(f"成功生成第{chunk_idx}个PDF: {final_pdf}")
+            print(f"成功生成并加密第{chunk_idx}个PDF: {final_pdf}")
 
         except (IOError, OSError) as e:
             print(f"图像处理异常: {str(e)}")

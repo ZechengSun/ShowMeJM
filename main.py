@@ -19,8 +19,8 @@ class MyPlugin(BasePlugin):
         "platform": 'napcat',
         # 消息平台的域名,端口号和token
         # 使用时需在napcat内配置http服务器 host和port对应好
-        'http_host': 'localhost',
-        'http_port': 2333,
+        'http_host': '172.22.0.2', #改成你的消息平台的IP地址或域名
+        'http_port': 3000,
         # 若消息平台未配置token则留空 否则填写配置的token
         'token': '',
         # 打包成pdf时每批处理的图片数量 每批越小内存占用越小 (仅供参考, 建议按实际调整: 设置为50时峰值占用约1.5G内存, 设置为20时最高占用1G左右)
@@ -159,7 +159,7 @@ class MyPlugin(BasePlugin):
         args = parse_command(ctx, cleaned_text)
         if len(args) == 0:
             await ctx.reply(MessageChain([
-                "你是不是在找: \n""1.搜索功能: \n""格式: 查jm [关键词/标签] [页码(默认第一页)]\n""例: 查jm 鸣潮,+无修正 2\n\n""2.下载指定id的本子:\n""格式:jm [jm号]\n""例: jm 350234\n\n""3.下载随机本子:\n""格式:随机jm\n\n""4.寻找可用下载域名:\n""格式:jm更新域名\n\n""5.清除默认域名:\n""格式:jm清空域名"]))
+                "你是不是在找: \n""1.搜索功能: \n""格式: 查jm [关键词/标签] [页码(默认第一页)]\n""例: 查jm 鸣潮,+无修正 2\n\n""2.下载指定id的本子:\n""格式:jm [jm号]\n""例: jm 114514\n\n""3.下载随机本子:\n""格式:随机jm\n\n""4.寻找可用下载域名:\n""格式:jm更新域名\n\n""5.清除默认域名:\n""格式:jm清空域名\n""密码：jmcomic"]))
             if self.options.prevent_default:
                 # 阻止该事件默认行为（向接口获取回复）
                 ctx.prevent_default()
