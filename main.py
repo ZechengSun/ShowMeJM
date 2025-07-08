@@ -12,15 +12,15 @@ from plugins.ShowMeJM.utils.jm_random_search import JmRandomSearch
 
 
 # 注册插件
-@register(name="ShowMeJM", description="jm下载", version="2.4", author="exneverbur")
+@register(name="ShowMeJM", description="jm下载", version="2.5", author="exneverbur")
 class MyPlugin(BasePlugin):
     init_options = {
         # 你使用的消息平台, 只能为'napcat', 'llonebot', 'lagrange'
         "platform": 'napcat',
         # 消息平台的域名,端口号和token
         # 使用时需在napcat内配置http服务器 host和port对应好
-        'http_host': '172.22.0.2', #改成你的消息平台的IP地址或域名
-        'http_port': 3000,
+        'http_host': 'localhost',
+        'http_port': 2333,
         # 若消息平台未配置token则留空 否则填写配置的token
         'token': '',
         # 打包成pdf时每批处理的图片数量 每批越小内存占用越小 (仅供参考, 建议按实际调整: 设置为50时峰值占用约1.5G内存, 设置为20时最高占用1G左右)
@@ -37,10 +37,13 @@ class MyPlugin(BasePlugin):
         # 配置文件所在位置
         'option': 'plugins/ShowMeJM/config.yml',
         # 是否在启动时获取本子总页数(此功能在插件加载时会访问JM搜索页数, 将会提高随机本子指令的搜索速度)
-        'open_random_search': True,
+        'open_random_search': False,
         # 白名单 配置个人白名单和群白名单 若为空或不配置则不启用白名单功能
         # 'person_whitelist': [123456, 654321],
         # 'group_whitelist': [12345678],
+        # PDF加密时的密码 若为'', 则不加密
+        # 'pdf_password': '我是密码'
+        'pdf_password': ''
     }
 
     # 插件加载时触发
@@ -159,7 +162,7 @@ class MyPlugin(BasePlugin):
         args = parse_command(ctx, cleaned_text)
         if len(args) == 0:
             await ctx.reply(MessageChain([
-                "你是不是在找: \n""1.搜索功能: \n""格式: 查jm [关键词/标签] [页码(默认第一页)]\n""例: 查jm 鸣潮,+无修正 2\n\n""2.下载指定id的本子:\n""格式:jm [jm号]\n""例: jm 114514\n\n""3.下载随机本子:\n""格式:随机jm\n\n""4.寻找可用下载域名:\n""格式:jm更新域名\n\n""5.清除默认域名:\n""格式:jm清空域名\n""密码：jmcomic"]))
+                "你是不是在找: \n""1.搜索功能: \n""格式: 查jm [关键词/标签] [页码(默认第一页)]\n""例: 查jm 鸣潮,+无修正 2\n\n""2.下载指定id的本子:\n""格式:jm [jm号]\n""例: jm 114514\n\n""3.下载随机本子:\n""格式:随机jm\n\n""4.寻找可用下载域名:\n""格式:jm更新域名\n\n""5.清除默认域名:\n""格式:jm清空域名\n\n"f"PDF密码：{self.options.pdf_password}"]))
             if self.options.prevent_default:
                 # 阻止该事件默认行为（向接口获取回复）
                 ctx.prevent_default()

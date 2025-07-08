@@ -1,6 +1,6 @@
 class JmOptions:
     __slots__ = ["platform", "http_host", "http_port", "token", "batch_size", "pdf_max_pages", "group_folder",
-                 "auto_find_jm", "prevent_default", "option", "open_random_search", "group_whitelist", 'person_whitelist']
+                 "auto_find_jm", "prevent_default", "option", "open_random_search", "group_whitelist", 'person_whitelist', 'pdf_password']
 
     def __init__(
             self,
@@ -16,7 +16,8 @@ class JmOptions:
             option: str = 'plugins/ShowMeJM/config.yml',
             open_random_search: bool = True,
             group_whitelist: list = None,
-            person_whitelist: list = None
+            person_whitelist: list = None,
+            pdf_password: str  = '',
     ):
         self.platform = platform
         self.http_host = http_host
@@ -31,6 +32,7 @@ class JmOptions:
         self.open_random_search = open_random_search
         self.group_whitelist = group_whitelist
         self.person_whitelist = person_whitelist
+        self.pdf_password = pdf_password
 
     @classmethod
     def from_dict(cls, config: dict):
@@ -47,5 +49,6 @@ class JmOptions:
             option=config.get('option', 'plugins/ShowMeJM/config.yml'),
             open_random_search=config.get('open_random_search', True),
             group_whitelist=config.get('group_whitelist', []),
-            person_whitelist=config.get('person_whitelist', [])
+            person_whitelist=config.get('person_whitelist', []),
+            pdf_password=config.get('pdf_password', ''),
         )

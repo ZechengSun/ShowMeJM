@@ -16,7 +16,7 @@ from pkg.plugin.context import EventContext
 from plugins.ShowMeJM.utils.jm_options import JmOptions
 from plugins.ShowMeJM.utils.jm_send_http_request import *
 
-from PyPDF2 import PdfReader, PdfWriter
+import pikepdf
 
 async def before_download(ctx: EventContext, options: JmOptions, manga_id):
     try:
@@ -73,22 +73,11 @@ def download_and_get_pdf(options: JmOptions, arg):
 
 def encrypt_pdf(input_pdf, output_pdf, password):
     """
-    使用 PyPDF2 为 PDF 添加密码保护
+    使用 pikepdf 为 PDF 添加密码保护
     """
-    reader = PdfReader(input_pdf)
-    writer = PdfWriter()
+    with pikepdf.open(input_pdf) as pdf:
+        pdf.save(output_pdf, encryption=pikepdf.Encryption(owner=password, user=password))
 
-    # 将所有页面添加到新的 PDF 中
-    for page in reader.pages:
-        writer.add_page(page)
-
-    # 设置密码
-    writer.encrypt(password)
-
-    # 写入加密后的 PDF
-    with open(output_pdf, "wb") as f:
-        writer.write(f)
-        
 def all2PDF(options, input_folder, pdfpath, pdfname):
     start_time = time.time()
     image_paths = []
@@ -137,9 +126,12 @@ def all2PDF(options, input_folder, pdfpath, pdfname):
                             img.close()
 
             # 加密 PDF 文件
-            encrypt_pdf(temp_pdf, final_pdf, password="jmcomic")
+            if options.pdf_password is not None and options.pdf_password != '':
+                encrypt_pdf(temp_pdf, final_pdf, password=options.pdf_password)
+                print(f"成功生成并加密第{chunk_idx}个PDF: {final_pdf}")
+            else:
+                shutil.move(temp_pdf, final_pdf)
             pdf_files.append(final_pdf)
-            print(f"成功生成并加密第{chunk_idx}个PDF: {final_pdf}")
 
         except (IOError, OSError) as e:
             print(f"图像处理异常: {str(e)}")

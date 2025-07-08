@@ -13,6 +13,8 @@
 
 感谢[drdon1234](https://github.com/drdon1234)贡献的获取随机漫画功能
 
+感谢[DaikonSushi](https://github.com/DaikonSushi)贡献的pdf加密功能
+
 ## 安装
 
 配置完成 [LangBot](https://github.com/RockChinQ/LangBot) 主程序后使用管理员账号向机器人发送命令即可安装：
@@ -155,6 +157,9 @@ py -<你的版本> -m pip install jmcomic –i https://pypi.org/project –U
 ![img_1.png](img/img_1.png)
 
 ## 更新日志
+v2.5
+- 新增 PDF加密功能, 在main.py配置密码(pdf_password)可把打包的pdf加密
+
 v2.4
 - 修改 随机jm改为除impl外其余均使用用户配置的下载配置
 - 优化 随机jm现在也会显示漫画名了
