@@ -41,7 +41,7 @@ class MyPlugin(BasePlugin):
         # 白名单 配置个人白名单和群白名单 若为空或不配置则不启用白名单功能
         # 'person_whitelist': [123456, 654321],
         # 'group_whitelist': [12345678],
-        # PDF加密时的密码 若为'', 则不加密
+        # PDF加密时的密码 若为'', 则不加密 注意: 文件加密会将pdf整个加载进内存来进行加密, 这将提高打包时的内存占用, 请按需开启
         # 'pdf_password': '我是密码'
         'pdf_password': ''
     }
