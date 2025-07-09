@@ -158,7 +158,7 @@ py -<你的版本> -m pip install jmcomic –i https://pypi.org/project –U
 
 ## 更新日志
 v2.5
-- 新增 PDF加密功能, 在main.py配置密码(pdf_password)可把打包的pdf加密
+- 新增 PDF加密功能, 在main.py配置密码(pdf_password)可把打包的pdf加密(文件加密会将pdf整个加载进内存来进行加密, 这将提高打包时的内存占用, 请按需开启)
 
 v2.4
 - 修改 随机jm改为除impl外其余均使用用户配置的下载配置
