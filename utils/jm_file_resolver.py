@@ -18,6 +18,7 @@ from plugins.ShowMeJM.utils.jm_send_http_request import *
 
 import pikepdf
 
+
 async def before_download(ctx: EventContext, options: JmOptions, manga_id):
     try:
         pdf_files = []
@@ -40,26 +41,50 @@ async def before_download(ctx: EventContext, options: JmOptions, manga_id):
         await ctx.reply(MessageChain(["代码运行时出现问题:" + str(e)]))
 
 
-# 下载图片
 def download_and_get_pdf(options: JmOptions, arg):
+    """
+    根据给定的选项和参数下载并转换成PDF。
+
+    参数:
+    - options: 包含下载配置的JmOptions对象。
+    - arg: 要下载的相册的ID。
+
+    返回:
+    - matches: 匹配的PDF文件路径列表。
+    """
     # 自定义设置：
     if os.path.exists(options.option):
         load_config = jmcomic.JmOption.from_file(options.option)
     else:
         raise Exception("未检测到JM下载的配置文件")
-    album, dler = jmcomic.download_album(arg, load_config)
-    downloaded_file_name = album.album_id
+
+    downloaded_file_name = arg
+
+    # 读取配置文件以获取下载目录
     with open(options.option, "r", encoding="utf8") as f:
-        data = yaml.load(f, Loader=yaml.FullLoader)
+        data = yaml.safe_load(f)
         path = os.path.abspath(data["dir_rule"]["base_dir"])
 
+    # 提前检查目标 PDF 是否存在
+    real_name = glob.escape(str(downloaded_file_name))
+    pattern = os.path.join(path, f"{real_name}-*.pdf")
+    matches = glob.glob(pattern)
+    if matches:
+        print(f"文件：《{downloaded_file_name}》 已存在无需下载，直接返回")
+        return matches
+
+    # 不存在 PDF 才开始下载
+    album, dler = jmcomic.download_album(arg, load_config)
+    downloaded_file_name = album.album_id
+
+    # 检查下载后的目录中是否存在对应的 PDF
     with os.scandir(path) as entries:
         for entry in entries:
             if entry.is_dir() and downloaded_file_name == entry.name:
                 real_name = glob.escape(entry.name)
-                pattern = f"{path}/{real_name}*.pdf"
+                pattern = os.path.join(path, f"{real_name}-*.pdf")
                 matches = glob.glob(pattern)
-                if len(matches) > 0:
+                if matches:
                     print(f"文件：《{entry.name}》 已存在无需转换pdf，直接返回")
                     return matches
                 else:
@@ -71,12 +96,15 @@ def download_and_get_pdf(options: JmOptions, arg):
                         raise e
     return []
 
+
+
 def encrypt_pdf(input_pdf, output_pdf, password):
     """
     使用 pikepdf 为 PDF 添加密码保护
     """
     with pikepdf.open(input_pdf) as pdf:
         pdf.save(output_pdf, encryption=pikepdf.Encryption(owner=password, user=password))
+
 
 def all2PDF(options, input_folder, pdfpath, pdfname):
     start_time = time.time()
@@ -88,7 +116,10 @@ def all2PDF(options, input_folder, pdfpath, pdfname):
                 # 处理子目录内容（自然排序）
                 subdir = os.path.join(input_folder, entry.name)
                 with os.scandir(subdir) as sub_entries:
-                    for sub_entry in sorted(sub_entries, key=lambda e: int(re.search(r'\d+', e.name).group()) if re.search(r'\d+', e.name) else float('inf')):
+                    for sub_entry in sorted(sub_entries,
+                                            key=lambda e: int(re.search(r'\d+', e.name).group()) if re.search(r'\d+',
+                                                                                                              e.name) else float(
+                                                    'inf')):
                         if sub_entry.is_file():
                             image_paths.append(os.path.join(subdir, sub_entry.name))
     pdf_files = []
@@ -163,6 +194,7 @@ async def send_files_in_order(options: JmOptions, ctx: EventContext, pdf_files, 
             except Exception as e:
                 await ctx.reply(MessageChain([f"发送文件 {file_name} 时出错: {str(e)}"]))
                 print(f"发送文件 {file_name} 时出错: {str(e)}")
+
 
 # 获取群文件目录是否存在 并返回目录id
 async def get_group_folder_id(options: JmOptions, ctx: EventContext, group_id, folder_name):
