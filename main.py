@@ -37,7 +37,7 @@ class MyPlugin(BasePlugin):
         # 配置文件所在位置
         'option': 'plugins/ShowMeJM/config.yml',
         # 是否在启动时获取本子总页数(此功能在插件加载时会访问JM搜索页数, 将会提高随机本子指令的搜索速度)
-        'open_random_search': False,
+        'open_random_search': True,
         # 白名单 配置个人白名单和群白名单 若为空或不配置则不启用白名单功能
         # 'person_whitelist': [123456, 654321],
         # 'group_whitelist': [12345678],
@@ -138,7 +138,7 @@ class MyPlugin(BasePlugin):
         else:
             await ctx.reply(MessageChain([f"使用方法不正确，请输入指令 /jm 获取使用说明"]))
             return
-        max_page = await self.random_searcher.get_max_page(query=tags)
+        max_page = self.random_searcher.get_max_page(query=tags)
         if max_page == 0:
             await ctx.reply(
                 MessageChain([f"未搜索到任何关键词为 {tags} 随机本子，建议更换为其他语言的相同关键词重新搜索..."]))

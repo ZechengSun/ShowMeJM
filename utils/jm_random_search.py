@@ -2,11 +2,12 @@
 随机漫画功能
 贡献者 @drdon1234
 '''
-import os
-import json
 import asyncio
-import aiofiles
+import json
+import os
 from datetime import datetime, timedelta
+
+import aiofiles
 
 
 class JmRandomSearch:
@@ -45,29 +46,27 @@ class JmRandomSearch:
         except Exception as e:
             print(f"[JmRandomSearch] 持久化失败: {e}")
 
-    async def get_max_page(self, query='', initial_page=6000):
+    async def get_max_page(self, query=''):
         """
         获取搜索的分页目录总页数，并缓存结果
         """
         await self._cache_loaded.wait()  # 保证缓存已加载
         async with self._max_page_lock:
             print(f"正在获取搜索 '{query}' 的分页目录总页数")
-            cached_max_page = initial_page
             now = datetime.now()
             cache_entry = self.cache_data.get(query)
             # 检查缓存是否存在
             if cache_entry:
-                max_page = cache_entry.get("max_page", initial_page)
+                max_page = cache_entry.get("max_page")
                 last_update = datetime.fromisoformat(cache_entry.get("timestamp", "1970-01-01T00:00:00"))
                 if now - last_update <= timedelta(hours=24):
                     print(f"缓存有效，最大页数为: {max_page}")
                     return max_page
                 else:
                     print(f"缓存过期，重新校验最大页数 {max_page}")
-                    cached_max_page = max_page
-
-            # 检查最大页
-            valid_max_page = await self._validate_max_page(query, cached_max_page)
+                    valid_max_page = await self._validate_and_extend_cached_max_page(query, max_page)
+            else:
+                valid_max_page = self.find_max_page(query)
             # 写回缓存
             self.cache_data[query] = {
                 "max_page": valid_max_page,
@@ -77,52 +76,66 @@ class JmRandomSearch:
             print(f"最大页码更新为: {valid_max_page}")
             return valid_max_page
 
-    async def _validate_max_page(self, query: str, max_page: int) -> int:
-        """
-        从上次的最大页数开始，验证是否仍是最大页。
-        如果不是，向后或向前查找直到找到新的最大页。
-        """
-        if not await self._is_valid_page(query, max_page):
-            # 最大页缩小，右边界左移
-            low = 1
-            high = max_page - 1
-            # 左边界不存在
-            if not await self._is_valid_page(query, low):
-                return 0
+    def get_content_id(self, query: str, page: int) -> int:
+        result = self.client.search_site(search_query=query, page=page)
+        if not result:
+            print(f"未搜索到相关本子（query={query}, page={page}）")
+            return -1
+        return list(result.iter_id_title())[-1][0]
 
-        else:
-            # 最大页变大，左右边界右移
-            low = max_page + 1
-            high = max_page << 1
-            # max_page仍是最大页
-            if not await self._is_valid_page(query, low):
-                return max_page
-            while await self._is_valid_page(query, high):
-                low = high
-                high <<= 1
+    def find_max_page(self, query: str) -> int:
+        # Step 1: 指数探测找到上界
+        page = 2048
+        content_id_l = self.get_content_id(query, page)
+        page *= 2
+        if content_id_l == -1:
+            return 0
 
-        return await self._binary_search_max_page(query, low, high)
-
-    async def _binary_search_max_page(self, query: str, low: int, high: int) -> int:
-        """
-        确保左边界存在，向右边界二分查最大页
-        """
-        while low <= high:
-            mid = (low + high) // 2
-            if await self._is_valid_page(query, mid):
-                low = mid + 1
+        while True:
+            content_id_r = self.get_content_id(query, page)
+            print(f"探测页 {page}, 返回 id={content_id_r}")
+            if content_id_r == content_id_l:
+                break
             else:
-                high = mid - 1
-        return high
+                content_id_l = content_id_r
+                page *= 2
 
-    async def _is_valid_page(self, query: str, page: int) -> bool:
-        """
-        包一层异步调用客户端，便于兼容同步/异步接口
-        """
-        try:
-            res = await asyncio.to_thread(self.client.search_site, search_query=query, page=page)
-            return bool(res)
-        except Exception as e:
-            print(f"[JmRandomSearch] 查询第 {page} 页出错: {e}")
-            return False
+        # 此时 page/2 是第一个超出最大页数的位置
+        left = page // 4
+        right = page // 2
 
+        # Step 2: 二分查找确定最大页
+        while left <= right:
+            mid = (left + right) // 2
+            content_id_mid = self.get_content_id(query, mid)
+            print(f"二分页 {mid}, 返回 id={content_id_mid}")
+            if content_id_mid == content_id_l:
+                # 返回的 id 和 content_id_l 相同，说明超出最大页数
+                right = mid - 1
+            else:
+                # 返回的 id 和之前不同，说明 mid 还在有效范围内
+                left = mid + 1
+
+        return left
+
+    async def _validate_and_extend_cached_max_page(self, query, cached_max):
+        """
+        验证 cached_max 是否依旧有效，如果有效就尝试向后探测几页
+        """
+        id_at_cached = self.get_content_id(query, cached_max)
+        if id_at_cached == -1:
+            print(f"[验证失败] 原 cached_max={cached_max} 无效，重新搜索")
+            return 0
+
+        # cached_max 仍然有效，尝试向后探测
+        probe_limit = 2  # 最多向后探测多少页
+        for i in range(probe_limit):
+            probe_page = cached_max + 1
+            probe_id = self.get_content_id(query, probe_page)
+            if probe_id == id_at_cached:
+                print(f"[验证成功] 最大页数更新为: {cached_max}")
+                return cached_max
+            print(f"[向后探测] page={probe_page}, id={probe_id}")
+            cached_max = probe_page
+            id_at_cached = probe_id
+        return self.find_max_page(query)
