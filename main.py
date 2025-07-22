@@ -138,7 +138,7 @@ class MyPlugin(BasePlugin):
         else:
             await ctx.reply(MessageChain([f"使用方法不正确，请输入指令 /jm 获取使用说明"]))
             return
-        max_page = self.random_searcher.get_max_page(query=tags)
+        max_page = await self.random_searcher.get_max_page(query=tags)
         if max_page == 0:
             await ctx.reply(
                 MessageChain([f"未搜索到任何关键词为 {tags} 随机本子，建议更换为其他语言的相同关键词重新搜索..."]))
