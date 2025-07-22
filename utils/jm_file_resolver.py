@@ -7,95 +7,83 @@ import os
 import re
 import shutil
 import time
+from typing import List
+
 import yaml
 
 import jmcomic
 from PIL import Image
+from jmcomic import JmOption, PartialDownloadFailedException
+
 from pkg.platform.types import MessageChain
 from pkg.plugin.context import EventContext
-from plugins.ShowMeJM.utils.jm_options import JmOptions
 from plugins.ShowMeJM.utils.jm_send_http_request import *
 
 import pikepdf
 
 
-async def before_download(ctx: EventContext, options: JmOptions, manga_id):
+def build_pdf_pattern(base_dir: str, album_name: str) -> str:
+    safe_name = glob.escape(album_name)
+    return os.path.join(base_dir, f"{safe_name}-*.pdf")
+
+
+def find_existing_pdfs(base_dir: str, album_name: str) -> list[str]:
+    pattern = build_pdf_pattern(base_dir, album_name)
+    return glob.glob(pattern)
+
+
+def load_jm_opt_from_file(yaml_path: str) -> JmOption:
+    if not os.path.isfile(yaml_path):
+        raise FileNotFoundError(f"JM下载配置文件不存在：{yaml_path}")
+    return JmOption.from_file(yaml_path)
+
+
+def read_base_dir(yaml_path: str) -> str:
+    with open(yaml_path, encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    return os.path.abspath(cfg["dir_rule"]["base_dir"])
+
+
+async def before_download(ctx: EventContext, options: JmOptions, album_id: int) -> None:
     try:
-        pdf_files = []
-        try:
-            pdf_files = download_and_get_pdf(options, manga_id)
-        except Exception as e:
-            await ctx.reply(MessageChain(["下载时出现问题:" + str(e)]))
-        print(f"成功保存了{len(pdf_files)}个pdf")
-        single_file_flag = len(pdf_files) == 1
-        if len(pdf_files) > 0:
-            await ctx.reply(MessageChain(["本子已经打包发在路上"]))
-            if ctx.event.launcher_type == "person":
-                await send_files_in_order(options, ctx, pdf_files, manga_id, single_file_flag, is_group=False)
-            else:
-                await send_files_in_order(options, ctx, pdf_files, manga_id, single_file_flag, is_group=True)
-        else:
-            print("没有找到下载的pdf文件")
-            await ctx.reply(MessageChain(["没有找到下载的pdf文件"]))
+        pdf_files = await download_album_and_get_pdfs(options, album_id)
+        print(f"成功生成 {len(pdf_files)} 个 PDF")
+        await ctx.reply(MessageChain(["本子打包已准备就绪，准备发送…"]))
+        single_file_tag = len(pdf_files) == 1
+        is_group = ctx.event.launcher_type != "person"
+        await send_files_in_order(
+            options, ctx, pdf_files, album_id, single_file_tag, is_group
+        )
     except Exception as e:
-        await ctx.reply(MessageChain(["代码运行时出现问题:" + str(e)]))
+        await ctx.reply(MessageChain([f"打包处理过程中出错: {e}"]))
+        print("before_download exception:", e)
 
 
-def download_and_get_pdf(options: JmOptions, arg):
+async def download_album_and_get_pdfs(options: JmOptions, album_id: int) -> List[str]:
     """
-    根据给定的选项和参数下载并转换成PDF。
-
-    参数:
-    - options: 包含下载配置的JmOptions对象。
-    - arg: 要下载的相册的ID。
-
-    返回:
-    - matches: 匹配的PDF文件路径列表。
+    下载整本并返回 PDF 绝对路径列表。
     """
-    # 自定义设置：
-    if os.path.exists(options.option):
-        load_config = jmcomic.JmOption.from_file(options.option)
-    else:
-        raise Exception("未检测到JM下载的配置文件")
+    # 1. 读配置和基础目录
+    jm_option = load_jm_opt_from_file(options.option)
+    base_dir = read_base_dir(options.option)
+    pdf_name = str(album_id)
+    # 2. 如果已有 PDF，直接复用
+    if existing := find_existing_pdfs(base_dir, pdf_name):
+        print(f"存在现有 PDF，跳过下载：{pdf_name}")
+        return existing
 
-    downloaded_file_name = arg
+    # 3. 执行 JM 下载
+    try:
+        album, _ = jmcomic.download_album(album_id, jm_option, check_exception=True)
+        pdf_name = album.album_id
+    except PartialDownloadFailedException as e:
+        # 做简单的补下载
+        for img, error in e.downloader.download_failed_image:
+            e.downloader.download_by_image_detail(img)
 
-    # 读取配置文件以获取下载目录
-    with open(options.option, "r", encoding="utf8") as f:
-        data = yaml.safe_load(f)
-        path = os.path.abspath(data["dir_rule"]["base_dir"])
-
-    # 提前检查目标 PDF 是否存在
-    real_name = glob.escape(str(downloaded_file_name))
-    pattern = os.path.join(path, f"{real_name}-*.pdf")
-    matches = glob.glob(pattern)
-    if matches:
-        print(f"文件：《{downloaded_file_name}》 已存在无需下载，直接返回")
-        return matches
-
-    # 不存在 PDF 才开始下载
-    album, dler = jmcomic.download_album(arg, load_config)
-    downloaded_file_name = album.album_id
-
-    # 检查下载后的目录中是否存在对应的 PDF
-    with os.scandir(path) as entries:
-        for entry in entries:
-            if entry.is_dir() and downloaded_file_name == entry.name:
-                real_name = glob.escape(entry.name)
-                pattern = os.path.join(path, f"{real_name}-*.pdf")
-                matches = glob.glob(pattern)
-                if matches:
-                    print(f"文件：《{entry.name}》 已存在无需转换pdf，直接返回")
-                    return matches
-                else:
-                    print("开始转换：%s " % entry.name)
-                    try:
-                        return all2PDF(options, os.path.join(path, entry.name), path, entry.name)
-                    except Exception as e:
-                        print(f"转换pdf时发生错误: {str(e)}")
-                        raise e
-    return []
-
+    # 4. 下载完再生成pdf
+    album_folder = os.path.join(base_dir, pdf_name)
+    return all2PDF(options, album_folder, base_dir, pdf_name)
 
 
 def encrypt_pdf(input_pdf, output_pdf, password):
@@ -119,7 +107,7 @@ def all2PDF(options, input_folder, pdfpath, pdfname):
                     for sub_entry in sorted(sub_entries,
                                             key=lambda e: int(re.search(r'\d+', e.name).group()) if re.search(r'\d+',
                                                                                                               e.name) else float(
-                                                    'inf')):
+                                                'inf')):
                         if sub_entry.is_file():
                             image_paths.append(os.path.join(subdir, sub_entry.name))
     pdf_files = []
