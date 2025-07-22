@@ -11,6 +11,8 @@ import aiofiles
 
 
 class JmRandomSearch:
+    # 是否正在查找最大页数
+    is_max_page_finding = False
     def __init__(self, client):
         self.client = client
         self.cache_dir = os.path.join(os.path.dirname(__file__), "cache")
@@ -50,6 +52,7 @@ class JmRandomSearch:
         """
         获取搜索的分页目录总页数，并缓存结果
         """
+        self.is_max_page_finding = True
         await self._cache_loaded.wait()  # 保证缓存已加载
         async with self._max_page_lock:
             print(f"正在获取搜索 '{query}' 的分页目录总页数")
@@ -61,6 +64,7 @@ class JmRandomSearch:
                 last_update = datetime.fromisoformat(cache_entry.get("timestamp", "1970-01-01T00:00:00"))
                 if now - last_update <= timedelta(hours=24):
                     print(f"缓存有效，最大页数为: {max_page}")
+                    self.is_max_page_finding = False
                     return max_page
                 else:
                     print(f"缓存过期，重新校验最大页数 {max_page}")
@@ -74,6 +78,7 @@ class JmRandomSearch:
             }
             await self._save_cache()
             print(f"最大页码更新为: {valid_max_page}")
+            self.is_max_page_finding = False
             return valid_max_page
 
     def get_content_id(self, query: str, page: int) -> int:
